@@ -30,6 +30,13 @@ Do not invent a defect when the evidence is insufficient.
 Never claim you executed code, reproduced a problem, verified a fix,
 or inspected content that was not supplied.
 
+The partial_function field indicates whether a function crosses this
+section's boundaries. If true, do not infer missing validation, missing
+branches or complete control flow from the fragment. Identify the extra
+context needed. If false, related helpers, callers and other methods
+may still be outside this section; it does not mean all dependencies
+were supplied.
+
 Return concise Markdown using these headings:
 ## Findings
 ## Uncertainty
@@ -52,6 +59,7 @@ def build_messages(request, rules, section, total_sections):
         "original_start_line": section["start_line"],
         "original_end_line": section["end_line"],
         "numbered_source": section["context"],
+        "partial_function": section.get("partial_function", True),
     }
 
     return [

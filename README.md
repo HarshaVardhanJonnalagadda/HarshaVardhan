@@ -282,3 +282,21 @@ Selected completed-run usage is summarized in [evidence/usage-summary.md](eviden
 Later manual runtime checks reproduced the order-total and cancelled-sales
 defects; see [evidence/runtime-validation.md](evidence/runtime-validation.md).
 Other findings have not been runtime-reproduced, and no fixes were verified.
+
+## Context handling upgrade
+
+On improve-review-accuracy, the splitter preserves complete functions
+and multiline strings when they fit within the section limit.
+Oversized functions may still be split; affected sections carry a
+partial_function flag that is included in the model prompt.
+
+The upgrade suite passed 40 tests.
+Results: evidence/upgrade-test-results.txt.
+
+This change has not yet been evaluated with fresh model reviews,
+so a reduction in false positives has not been demonstrated.
+Helpers and callers may still be outside a section.
+
+Historical review evidence remains unchanged. Changed section boundaries
+and prompts prevent safe reuse of earlier review responses; start a
+new run when evaluating this version.
