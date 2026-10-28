@@ -1,0 +1,8 @@
+{
+  "provider": "Groq",
+  "model": "openai/gpt-oss-120b",
+  "source_path": "examples/average_example.py",
+  "source_sha256": "064204513893e838c0a79994d2fad9cb3eddbd6d016ef48cfc5ef855d367eac8",
+  "source_line_count": 13,
+  "created_at_utc": "2026-10-28T05:37:04.524891+00:00"
+}

@@ -1,0 +1,13 @@
+0001: """Deliberately buggy input for demonstrating the review tool."""
+0002: 
+0003: 
+0004: def average(values):
+0005:     """Return the arithmetic mean; reject an empty list."""
+0006:     if not values:
+0007:         raise ValueError("values must not be empty")
+0008: 
+0009:     total = 0
+0010:     for value in values:
+0011:         total = value
+0012: 
+0013:     return total / len(values)

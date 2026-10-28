@@ -269,16 +269,33 @@ def main():
     args = parser.parse_args()
 
     try:
-        verify(
+        summary = verify(
             args.verification_folder,
             pause=args.pause,
             dry_run=args.dry_run,
             token_limit=args.token_limit,
         )
+
+        if args.dry_run:
+            return 0
+
+        metadata = json.loads(
+            (summary / "metadata.json").read_text(encoding="utf-8")
+        )
+
+        if metadata.get("outcome") != "verification_calls_complete":
+            print(
+                "Verification is incomplete; inspect the saved report.",
+                file=sys.stderr,
+            )
+            return 1
+
         return 0
+
     except (ValueError, OSError, KeyError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
+
     except KeyboardInterrupt:
         print("Stopped. Saved successful calls remain available.")
         return 130

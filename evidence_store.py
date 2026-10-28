@@ -84,19 +84,39 @@ def save_call_success(folder, call_name, result):
 
 def save_call_failure(folder, call_name, error):
     raw = getattr(error, "raw_response", None)
+    usage = {
+        "input_tokens": "unknown",
+        "output_tokens": "unknown",
+        "total_tokens": "unknown",
+    }
 
     if raw is not None:
         save_text(folder, f"{call_name}_raw_response.json", raw)
+
+        try:
+            data = json.loads(raw)
+        except (ValueError, TypeError):
+            data = None
+
+        reported = data.get("usage") if isinstance(data, dict) else None
+
+        if isinstance(reported, dict):
+            mapping = {
+                "input_tokens": "prompt_tokens",
+                "output_tokens": "completion_tokens",
+                "total_tokens": "total_tokens",
+            }
+
+            for destination, source in mapping.items():
+                value = reported.get(source)
+                if type(value) is int and value >= 0:
+                    usage[destination] = value
 
     save_json(folder, f"{call_name}_metadata.json", {
         "outcome": "failed",
         "error": str(error),
         "duration_seconds": getattr(error, "duration_seconds", None),
-        "usage": {
-            "input_tokens": "unknown",
-            "output_tokens": "unknown",
-            "total_tokens": "unknown",
-        },
+        "usage": usage,
     })
 
 

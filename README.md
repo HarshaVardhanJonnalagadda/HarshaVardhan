@@ -87,24 +87,26 @@ python reviewer.py --help
 The tool processes every source line, but individual sections may lack
 related code. Section reviews are candidate findings, not verified facts.
 
-## Project files
+    ## Project files
 
-- reviewer.py: main review CLI
-- source_context.py: source loading and section preparation
-- prompts.py: review prompt construction
-- provider.py: Groq HTTP connection and response parsing
-- evidence_store.py: evidence and metadata storage
-- resume_review.py: reuse validated successful section responses
-- consolidate.py: optional consolidation of section notes
-- resume_consolidation.py: consolidation recovery utility
-- verification_context.py: approximate source-context retrieval
-- verification_plan.py: prepare source-verification tasks
-- verify_report.py: optional model assessment of retrieved evidence
-- Data/: unchanged supplied service, rules and cases
-- requests/: saved ordinary-language questions
-- reviews/: review runs and validation notes
-- tests/: automated tests
-- evidence/: saved test output
+    - reviewer.py: main review CLI
+    - source_context.py: source loading and section preparation
+    - prompts.py: review prompt construction
+    - provider.py: Groq HTTP connection and response parsing
+    - evidence_store.py: evidence and metadata storage
+    - resume_review.py: reuse validated successful section responses
+    - consolidate.py: optional consolidation of section notes
+    - resume_consolidation.py: consolidation recovery utility
+    - verification_context.py: approximate source-context retrieval
+    - verification_plan.py: prepare source-verification tasks
+    - verify_report.py: optional model assessment of retrieved evidence
+    - Data/: unchanged supplied service, rules and cases
+    - requests/: saved ordinary-language questions
+    - reviews/: review runs and validation notes
+    - tests/: automated tests
+    - evidence/: saved test output
+    - review-input/: checksum-verified supplied assignment files; Data/ is
+    retained as an identical compatibility copy for earlier commands.
 
 ## Results and evidence
 
@@ -204,7 +206,7 @@ python -m unittest discover -s tests -v > evidence/test-results.txt 2>&1
 cat evidence/test-results.txt
 ```
 
-The latest recorded test run passed 22 tests.
+The latest recorded test run passed 34 tests.
 The saved output is evidence/test-results.txt.
 
 Tests use simulated provider responses. Passing tests do not establish
@@ -238,3 +240,41 @@ This root README documents the review tool.
 
 Human assessment must distinguish supported findings, refuted claims,
 missing evidence and requirements that were not specified.
+
+## Provider and model choice
+
+Groq with openai/gpt-oss-120b was selected because free-tier access
+supported the assignment's code-review workflow. The tool uses the
+provider's HTTP API and records available token usage. Rate limits
+and daily quotas required pauses and resumable runs.
+
+## Independent-file demonstration
+
+The tool also reviewed examples/average_example.py using an
+ordinary-language question without identifying the faulty line.
+
+Evidence:
+reviews/20261028T053704Z_e1d60fc9b4a44d06811e106de0ce8b94/
+
+The model identified the deliberate accumulation bug. Its response
+also contained an incorrect explanation and speculative findings,
+documented separately in that run's validation.md.
+
+## Incomplete work and remaining limitations
+
+Runtime reproduction and fix verification remain unperformed.
+Some historical consolidation and verification attempts failed or
+remained incomplete; their saved metadata records these outcomes.
+
+Section boundaries can split functions and SQL statements, producing
+incomplete context and false positives. Human validation remains
+necessary.
+
+Failed-call token usage is now preserved when supplied in a response.
+Run-level totals cover successful calls only, as stated in their
+usage_scope metadata. Reused calls must not be counted again when
+calculating usage across resumed runs.
+
+Historical evidence has not been rewritten to reflect later fixes.
+
+Selected completed-run usage is summarized in [evidence/usage-summary.md](evidence/usage-summary.md).

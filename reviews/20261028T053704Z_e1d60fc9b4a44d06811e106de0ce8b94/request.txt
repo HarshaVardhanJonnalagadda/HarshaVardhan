@@ -1,0 +1,1 @@
+This function should calculate the arithmetic mean, but its results seem wrong. Investigate the cause and explain what should be checked next.
