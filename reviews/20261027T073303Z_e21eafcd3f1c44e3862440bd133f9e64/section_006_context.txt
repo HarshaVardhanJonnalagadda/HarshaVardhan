@@ -1,0 +1,125 @@
+0667:                 if existing["order_id"] != order_id or existing["amount_cents"] != amount_cents:
+0668:                     raise Conflict("Refund request ID is already in use")
+0669:                 return dict(existing)
+0670:             order = self.db.order(order_id)
+0671:             if order["status"] != "shipped":
+0672:                 raise Conflict("Only shipped orders can be refunded")
+0673:             remaining = order["total_cents"] - self.db.refund_total(order_id)
+0674:             if amount_cents > remaining:
+0675:                 raise Conflict("Refund would exceed the order total")
+0676:             refund_id = "REF-" + payload_hash(request_id)[:12].upper()
+0677:             self.db.execute("INSERT INTO refunds(refund_id, order_id, request_id, "
+0678:                             "amount_cents, reason, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+0679:                             (refund_id, order_id, request_id, amount_cents, reason, timestamp(now)))
+0680:             self.db.audit("order", order_id, "refunded",
+0681:                           {"refund_id": refund_id, "amount_cents": amount_cents}, now)
+0682:         return dict(self.db.one("SELECT * FROM refunds WHERE refund_id = ?", (refund_id,)))
+0683: 
+0684:     def history(self, order_id: str) -> list[dict]:
+0685:         self.db.order(order_id)
+0686:         rows = self.db.all("SELECT * FROM audit_events WHERE entity_type = 'order' "
+0687:                            "AND entity_id = ? ORDER BY event_id", (order_id,))
+0688:         result = []
+0689:         for row in rows:
+0690:             event = dict(row)
+0691:             event["detail"] = json.loads(event.pop("detail_json"))
+0692:             result.append(event)
+0693:         return result
+0694: 
+0695: 
+0696: class ReportingService:
+0697:     def __init__(self, db: Database):
+0698:         self.db = db
+0699: 
+0700:     def date_bounds(self, start: str, end: str) -> tuple[str, str]:
+0701:         first = parse_day(start)
+0702:         last = parse_day(end)
+0703:         if first > last:
+0704:             raise ServiceError("Start date must not be after end date")
+0705:         if (last - first).days > 366:
+0706:             raise ServiceError("Report range must not exceed 367 days")
+0707:         after = last + timedelta(days=1)
+0708:         return first.isoformat() + "T00:00:00+00:00", after.isoformat() + "T00:00:00+00:00"
+0709: 
+0710:     def sales(self, start: str, end: str) -> dict:
+0711:         lower, upper = self.date_bounds(start, end)
+0712:         row = self.db.one(
+0713:             "SELECT COUNT(*) AS order_count, COALESCE(SUM(total_cents), 0) AS gross_cents, "
+0714:             "COALESCE(SUM(discount_cents), 0) AS discount_cents, "
+0715:             "COALESCE(SUM(tax_cents), 0) AS tax_cents, "
+0716:             "COALESCE(SUM(shipping_cents), 0) AS shipping_cents "
+0717:             "FROM orders WHERE created_at >= ? AND created_at < ?",
+0718:             (lower, upper),
+0719:         )
+0720:         refunds = self.db.one(
+0721:             "SELECT COALESCE(SUM(r.amount_cents), 0) AS refunded_cents "
+0722:             "FROM refunds r JOIN orders o ON o.order_id = r.order_id "
+0723:             "WHERE o.created_at >= ? AND o.created_at < ?",
+0724:             (lower, upper),
+0725:         )
+0726:         result = dict(row)
+0727:         result.update(dict(refunds))
+0728:         result["net_cents"] = result["gross_cents"] - result["refunded_cents"]
+0729:         result["start"] = start
+0730:         result["end"] = end
+0731:         count = result["order_count"]
+0732:         result["average_order_cents"] = round(result["gross_cents"] / count) if count else 0
+0733:         result["currency"] = "USD"
+0734:         return result
+0735: 
+0736:     def status_counts(self) -> dict[str, int]:
+0737:         rows = self.db.all("SELECT status, COUNT(*) AS count FROM orders GROUP BY status")
+0738:         result = {status: 0 for status in sorted(VALID_STATUSES)}
+0739:         result.update({row["status"]: row["count"] for row in rows})
+0740:         return result
+0741: 
+0742:     def top_products(self, start: str, end: str, limit: int = 10) -> list[dict]:
+0743:         integer(limit, "limit", 1, 100)
+0744:         lower, upper = self.date_bounds(start, end)
+0745:         rows = self.db.all(
+0746:             "SELECT l.sku, l.name, SUM(l.quantity) AS units, "
+0747:             "SUM(l.line_total_cents) AS merchandise_cents "
+0748:             "FROM order_lines l JOIN orders o ON o.order_id = l.order_id "
+0749:             "WHERE o.created_at >= ? AND o.created_at < ? AND o.status != 'cancelled' "
+0750:             "GROUP BY l.sku, l.name ORDER BY units DESC, l.sku LIMIT ?",
+0751:             (lower, upper, limit),
+0752:         )
+0753:         return [dict(row) for row in rows]
+0754: 
+0755:     def customer_summary(self, customer_id: str) -> dict:
+0756:         customer = self.db.customer(customer_id)
+0757:         row = self.db.one(
+0758:             "SELECT COUNT(*) AS count, COALESCE(SUM(total_cents), 0) AS total "
+0759:             "FROM orders WHERE customer_id = ? AND status != 'cancelled'",
+0760:             (customer_id,),
+0761:         )
+0762:         return {"customer": asdict(customer), "order_count": row["count"],
+0763:                 "ordered_cents": row["total"]}
+0764: 
+0765:     def inventory_value(self) -> dict:
+0766:         rows = self.db.all("SELECT category, SUM(stock) AS units, "
+0767:                            "SUM(stock * price_cents) AS value_cents FROM products "
+0768:                            "GROUP BY category ORDER BY category")
+0769:         categories = [dict(row) for row in rows]
+0770:         return {"categories": categories,
+0771:                 "total_units": sum(row["units"] for row in categories),
+0772:                 "total_value_cents": sum(row["value_cents"] for row in categories)}
+0773: 
+0774:     def reconcile_inventory(self) -> list[dict]:
+0775:         rows = self.db.all(
+0776:             "SELECT p.sku, p.stock, COALESCE(SUM(e.delta), 0) AS ledger_stock "
+0777:             "FROM products p LEFT JOIN inventory_events e ON e.sku = p.sku "
+0778:             "GROUP BY p.sku, p.stock ORDER BY p.sku",
+0779:         )
+0780:         return [{"sku": row["sku"], "stock": row["stock"],
+0781:                  "ledger_stock": row["ledger_stock"],
+0782:                  "matches": row["stock"] == row["ledger_stock"]} for row in rows]
+0783: 
+0784:     def export_orders(self, path: Path, start: str, end: str) -> dict:
+0785:         lower, upper = self.date_bounds(start, end)
+0786:         if not path.parent.is_dir():
+0787:             raise ServiceError("Export directory does not exist")
+0788:         rows = self.db.all(
+0789:             "SELECT order_id, customer_id, status, subtotal_cents, discount_cents, "
+0790:             "shipping_cents, tax_cents, total_cents, created_at FROM orders "
+0791:             "WHERE created_at >= ? AND created_at < ? ORDER BY created_at, order_id",

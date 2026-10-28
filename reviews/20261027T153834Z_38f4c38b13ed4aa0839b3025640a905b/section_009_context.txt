@@ -1,0 +1,56 @@
+1005:                              args.request_id, args.reason, now)
+1006:     if command == "history":
+1007:         return orders.history(args.order_id)
+1008:     if command == "restock":
+1009:         return catalog.restock(args.sku.upper(), args.quantity, args.reason, now)
+1010:     if command == "stock-history":
+1011:         return catalog.stock_history(args.sku.upper(), args.limit)
+1012:     if command == "low-stock":
+1013:         return catalog.low_stock(args.threshold)
+1014:     if command == "set-price":
+1015:         return catalog.update_price(args.sku.upper(), money_to_cents(args.amount), now)
+1016:     if command == "set-active":
+1017:         return catalog.set_active(args.sku.upper(), args.value == "yes", now)
+1018:     if command == "report":
+1019:         return reports.sales(args.start, args.end)
+1020:     if command == "top-products":
+1021:         return reports.top_products(args.start, args.end, args.limit)
+1022:     if command == "export":
+1023:         return reports.export_orders(args.output, args.start, args.end)
+1024:     if command == "customer-summary":
+1025:         return reports.customer_summary(args.customer_id)
+1026:     if command == "inventory-value":
+1027:         return reports.inventory_value()
+1028:     if command == "health":
+1029:         return reports.health()
+1030:     if command == "import-orders":
+1031:         return import_orders(db, args.input, now)
+1032:     if command == "invoice":
+1033:         return write_invoice(db, args.order_id, args.output)
+1034:     raise ServiceError(f"Unsupported command: {command}")
+1035: 
+1036: 
+1037: def main(argv: list[str] | None = None) -> int:
+1038:     parser = build_parser()
+1039:     args = parser.parse_args(argv)
+1040:     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING,
+1041:                         format="%(levelname)s %(message)s")
+1042:     db = None
+1043:     try:
+1044:         now = parse_time(args.at) if args.at else utc_now()
+1045:         db = Database(args.db)
+1046:         db.initialize()
+1047:         result = dispatch(args, db, now)
+1048:         print(json.dumps(result, indent=2, sort_keys=True))
+1049:         return 0
+1050:     except (ServiceError, OSError, sqlite3.Error) as exc:
+1051:         print(f"Error: {exc}", file=sys.stderr)
+1052:         LOG.debug("Command failed", exc_info=True)
+1053:         return 1
+1054:     finally:
+1055:         if db is not None:
+1056:             db.close()
+1057: 
+1058: 
+1059: if __name__ == "__main__":
+1060:     raise SystemExit(main())

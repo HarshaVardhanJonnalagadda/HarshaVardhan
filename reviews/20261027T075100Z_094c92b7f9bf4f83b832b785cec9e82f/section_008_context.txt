@@ -1,0 +1,132 @@
+0888:     commands.add_parser("seed", help="Create fictional customers, products and coupons")
+0889:     catalog = commands.add_parser("catalog", help="List product prices and stock")
+0890:     catalog.add_argument("--category")
+0891:     catalog.add_argument("--include-inactive", action="store_true")
+0892:     for name in ("quote", "checkout"):
+0893:         command = commands.add_parser(name)
+0894:         command.add_argument("--request", type=Path, required=True)
+0895:     order = commands.add_parser("order", help="View one order")
+0896:     order.add_argument("order_id")
+0897:     orders = commands.add_parser("orders", help="List recent orders")
+0898:     orders.add_argument("--customer")
+0899:     orders.add_argument("--status", choices=sorted(VALID_STATUSES))
+0900:     orders.add_argument("--limit", type=int, default=50)
+0901:     cancel = commands.add_parser("cancel", help="Cancel an unshipped order")
+0902:     cancel.add_argument("order_id")
+0903:     cancel.add_argument("--reason", required=True)
+0904:     ship = commands.add_parser("ship", help="Record dispatch of an order")
+0905:     ship.add_argument("order_id")
+0906:     ship.add_argument("--carrier", required=True)
+0907:     ship.add_argument("--tracking", required=True)
+0908:     refund = commands.add_parser("refund", help="Record a refund against a shipped order")
+0909:     refund.add_argument("order_id")
+0910:     refund.add_argument("--amount", required=True, help="Dollars, for example 5.25")
+0911:     refund.add_argument("--request-id", required=True)
+0912:     refund.add_argument("--reason", required=True)
+0913:     history = commands.add_parser("history", help="Show order events")
+0914:     history.add_argument("order_id")
+0915:     restock = commands.add_parser("restock")
+0916:     restock.add_argument("sku")
+0917:     restock.add_argument("--quantity", type=int, required=True)
+0918:     restock.add_argument("--reason", required=True)
+0919:     stock = commands.add_parser("stock-history")
+0920:     stock.add_argument("sku")
+0921:     stock.add_argument("--limit", type=int, default=50)
+0922:     low = commands.add_parser("low-stock")
+0923:     low.add_argument("--threshold", type=int, default=10)
+0924:     price = commands.add_parser("set-price")
+0925:     price.add_argument("sku")
+0926:     price.add_argument("--amount", required=True)
+0927:     active = commands.add_parser("set-active")
+0928:     active.add_argument("sku")
+0929:     active.add_argument("--value", choices=("yes", "no"), required=True)
+0930:     for name in ("report", "top-products", "export"):
+0931:         command = commands.add_parser(name)
+0932:         command.add_argument("--start", required=True)
+0933:         command.add_argument("--end", required=True)
+0934:         if name == "top-products":
+0935:             command.add_argument("--limit", type=int, default=10)
+0936:         if name == "export":
+0937:             command.add_argument("--output", type=Path, required=True)
+0938:     customer = commands.add_parser("customer-summary")
+0939:     customer.add_argument("customer_id")
+0940:     commands.add_parser("inventory-value")
+0941:     commands.add_parser("health")
+0942:     bulk = commands.add_parser("import-orders")
+0943:     bulk.add_argument("--input", type=Path, required=True)
+0944:     invoice = commands.add_parser("invoice", help="Write a text invoice")
+0945:     invoice.add_argument("order_id")
+0946:     invoice.add_argument("--output", type=Path, required=True)
+0947:     return parser
+0948: 
+0949: 
+0950: def write_invoice(db: Database, order_id: str, path: Path) -> dict:
+0951:     order = OrderService(db).view(order_id)
+0952:     customer = db.customer(order["customer_id"])
+0953:     lines = [
+0954:         f"Order {order_id}",
+0955:         f"Customer: {customer.name}",
+0956:         f"Created: {order['created_at']}",
+0957:         f"Status: {order['status']}",
+0958:         "Currency: USD",
+0959:         "",
+0960:     ]
+0961:     for item in order["items"]:
+0962:         price = format_money(item["unit_price_cents"])
+0963:         total = format_money(item["line_total_cents"])
+0964:         lines.append(f"{item['sku']}  {item['quantity']} x {price} = {total}")
+0965:     lines.extend([
+0966:         "",
+0967:         f"Subtotal: {format_money(order['subtotal_cents'])}",
+0968:         f"Discount: {format_money(order['discount_cents'])}",
+0969:         f"Shipping: {format_money(order['shipping_cents'])}",
+0970:         f"Tax: {format_money(order['tax_cents'])}",
+0971:         f"Total: {format_money(order['total_cents'])}",
+0972:         f"Refunded: {format_money(order['refunded_cents'])}",
+0973:     ])
+0974:     if not path.parent.is_dir():
+0975:         raise ServiceError("Invoice directory does not exist")
+0976:     with path.open("x", encoding="utf-8") as stream:
+0977:         stream.write("\n".join(lines) + "\n")
+0978:     return {"order_id": order_id, "path": str(path)}
+0979: 
+0980: 
+0981: def dispatch(args: argparse.Namespace, db: Database, now: datetime) -> Any:
+0982:     catalog = CatalogService(db)
+0983:     orders = OrderService(db)
+0984:     reports = ReportingService(db)
+0985:     command = args.command
+0986:     if command == "seed":
+0987:         return seed_demo(db, now)
+0988:     if command == "catalog":
+0989:         return catalog.list_products(args.category, args.include_inactive)
+0990:     if command in {"quote", "checkout"}:
+0991:         request = CheckoutRequest.from_dict(read_json(args.request))
+0992:         if command == "quote":
+0993:             return PricingService(db).quote(request, now).to_dict()
+0994:         return orders.checkout(request, now)
+0995:     if command == "order":
+0996:         return orders.view(args.order_id)
+0997:     if command == "orders":
+0998:         return orders.list_orders(args.customer, args.status, args.limit)
+0999:     if command == "cancel":
+1000:         return orders.cancel(args.order_id, args.reason, now)
+1001:     if command == "ship":
+1002:         return orders.ship(args.order_id, args.carrier, args.tracking, now)
+1003:     if command == "refund":
+1004:         return orders.refund(args.order_id, money_to_cents(args.amount),
+1005:                              args.request_id, args.reason, now)
+1006:     if command == "history":
+1007:         return orders.history(args.order_id)
+1008:     if command == "restock":
+1009:         return catalog.restock(args.sku.upper(), args.quantity, args.reason, now)
+1010:     if command == "stock-history":
+1011:         return catalog.stock_history(args.sku.upper(), args.limit)
+1012:     if command == "low-stock":
+1013:         return catalog.low_stock(args.threshold)
+1014:     if command == "set-price":
+1015:         return catalog.update_price(args.sku.upper(), money_to_cents(args.amount), now)
+1016:     if command == "set-active":
+1017:         return catalog.set_active(args.sku.upper(), args.value == "yes", now)
+1018:     if command == "report":
+1019:         return reports.sales(args.start, args.end)

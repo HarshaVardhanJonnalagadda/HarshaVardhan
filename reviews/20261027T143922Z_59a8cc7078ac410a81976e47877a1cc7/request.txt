@@ -1,0 +1,1 @@
+I placed an order, cancelled it, then ran the sales report for that day. It still shows one order and the original sales amount. Shouldn't the cancelled order be excluded? Please investigate.

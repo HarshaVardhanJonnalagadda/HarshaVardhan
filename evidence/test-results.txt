@@ -1,0 +1,61 @@
+test_failed_sections_are_rejected (test_consolidate.ConsolidationTests.test_failed_sections_are_rejected) ... ok
+test_oversized_input_is_not_silently_truncated (test_consolidate.ConsolidationTests.test_oversized_input_is_not_silently_truncated) ... Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpxjsjlqc3/consolidation_0fd6e31a690644b795796de19bd7efc2
+ok
+test_provider_failure_produces_no_final_report (test_consolidate.ConsolidationTests.test_provider_failure_produces_no_final_report) ... Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpymmu_gfw/consolidation_2bbb946ff28f49f2a22b0d1faab49279
+Waiting 0s before merge 1/2...
+ok
+test_success_saves_report_and_evidence (test_consolidate.ConsolidationTests.test_success_saves_report_and_evidence) ... Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp86c8k75w/consolidation_da03163b04db4f24b12dd6a7b1c24d10
+Waiting 0s before merge 1/2...
+Waiting 0s before merge 2/2...
+ok
+test_dependency_depth_limit_is_reported (test_context_integrity.ContextIntegrityTests.test_dependency_depth_limit_is_reported) ... ok
+test_distant_validation_is_retrieved_together (test_context_integrity.ContextIntegrityTests.test_distant_validation_is_retrieved_together) ... ok
+test_oversized_evidence_is_not_split (test_context_integrity.ContextIntegrityTests.test_oversized_evidence_is_not_split) ... ok
+test_blank_request (test_reviewer.ReviewerTests.test_blank_request) ... ok
+test_dry_run_never_calls_provider (test_reviewer.ReviewerTests.test_dry_run_never_calls_provider) ... Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp9sfl2ta_/reviews/20261028T051149Z_bc14361f630147dfa057119dd39658bf
+Source: 1 lines, 1 sections
+Prepared section_001; no API call.
+ok
+test_each_run_has_a_unique_folder (test_reviewer.ReviewerTests.test_each_run_has_a_unique_folder) ... Dry run complete. No API calls made.
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpm8kope2a/reviews/20261028T051149Z_e4afe71c21694c89b7208bb97cb2c6a6
+Source: 1 lines, 1 sections
+Prepared section_001; no API call.
+Dry run complete. No API calls made.
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpm8kope2a/reviews/20261028T051149Z_2527c02f23374d8fb2b05e6c97bf3e6a
+Source: 1 lines, 1 sections
+Prepared section_001; no API call.
+ok
+test_empty_malformed_and_truncated_responses (test_reviewer.ReviewerTests.test_empty_malformed_and_truncated_responses) ... ok
+test_invalid_text_and_python (test_reviewer.ReviewerTests.test_invalid_text_and_python) ... ok
+test_missing_and_unreadable_source (test_reviewer.ReviewerTests.test_missing_and_unreadable_source) ... ok
+test_no_overwriting (test_reviewer.ReviewerTests.test_no_overwriting) ... ok
+test_provider_failure_is_not_success (test_reviewer.ReviewerTests.test_provider_failure_is_not_success) ... Dry run complete. No API calls made.
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpss5xd3hg/reviews/20261028T051149Z_3ea3351595f84687a3e9d27b93afa5e0
+Source: 1 lines, 1 sections
+Reviewing 1/1 (lines 1-1)...
+Incomplete: TEST HTTP 429
+Inspect evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpss5xd3hg/reviews/20261028T051149Z_3ea3351595f84687a3e9d27b93afa5e0
+ok
+test_sections_cover_all_lines (test_reviewer.ReviewerTests.test_sections_cover_all_lines) ... ok
+test_source_hash_matches_original_bytes (test_reviewer.ReviewerTests.test_source_hash_matches_original_bytes) ... ok
+test_success_and_source_preservation (test_reviewer.ReviewerTests.test_success_and_source_preservation) ... Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpo0v51znv/reviews/20261028T051149Z_300179b91e974c59ba4aa47f37c62956
+Source: 1 lines, 1 sections
+Reviewing 1/1 (lines 1-1)...
+ok
+test_unknown_usage_stays_unknown (test_reviewer.ReviewerTests.test_unknown_usage_stays_unknown) ... ok
+test_saved_success_is_reused (test_verification.VerificationTests.test_saved_success_is_reused) ... Section reviews saved. Consolidation and human validation remain pending.
+Task 1: 3268 estimated tokens — ELIGIBLE
+Waiting 0s before verification 1...
+Verification 1 saved.
+Assessments saved: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpnibvaxgo/verification_test/completed_3ee2ff2f70cb4bf7bc3ec5db05c9b8ba/verification_report.md
+Task 1: 3268 estimated tokens — ELIGIBLE
+Reusing verification 1.
+ok
+test_capitalized_name_matches_function (test_verification_context.RetrievalTests.test_capitalized_name_matches_function) ... ok
+test_helper_included_and_unrelated_function_excluded (test_verification_context.RetrievalTests.test_helper_included_and_unrelated_function_excluded) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.166s
+
+OK
+Assessments saved: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpnibvaxgo/verification_test/completed_64592436666f4379a2d78dcdc408bca3/verification_report.md

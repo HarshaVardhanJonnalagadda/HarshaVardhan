@@ -1,0 +1,31 @@
+{
+  "outcome": "verification_incomplete",
+  "provider": "Groq",
+  "model": "openai/gpt-oss-120b",
+  "successful_tasks": 0,
+  "reused_tasks": [],
+  "blocked_tasks": [],
+  "failed_tasks": [
+    1
+  ],
+  "pending_tasks": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "usage_totals": {
+    "input_tokens": "unknown",
+    "output_tokens": "unknown",
+    "total_tokens": "unknown"
+  },
+  "usage_scope": "Successful tasks, including reused results. Failed attempts and earlier stages are excluded.",
+  "human_validation": "pending",
+  "budget_is_estimate": true
+}

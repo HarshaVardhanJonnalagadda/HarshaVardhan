@@ -1,0 +1,9 @@
+{
+  "content_tokens": 4580,
+  "response_reserve": 2500,
+  "overhead_margin": 500,
+  "estimated_total": 7580,
+  "limit": 8000,
+  "eligible": true,
+  "note": "Local estimate; provider accounting may differ."
+}

@@ -1,0 +1,24 @@
+{
+  "provider": "Groq",
+  "model": "openai/gpt-oss-120b",
+  "outcome": "consolidation_complete",
+  "resumed_from": "reviews/20261027T075100Z_094c92b7f9bf4f83b832b785cec9e82f/consolidation_756b731d05e14be9b65543507fed9248",
+  "reused_merges": 4,
+  "successful_new_merges": 5,
+  "expected_total_merges": 9,
+  "duration_seconds": 348.565,
+  "new_usage_totals": {
+    "input_tokens": 18215,
+    "output_tokens": 9474,
+    "total_tokens": 27689
+  },
+  "successful_merge_usage_totals": {
+    "input_tokens": 31650,
+    "output_tokens": 18232,
+    "total_tokens": 49882
+  },
+  "usage_scope": "Successful merges only. Failed attempts and original section reviews have separate evidence and usage.",
+  "human_validation": "pending",
+  "original_source_supplied_to_consolidator": false,
+  "error": null
+}

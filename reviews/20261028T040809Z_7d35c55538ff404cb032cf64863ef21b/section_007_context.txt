@@ -1,0 +1,126 @@
+0777:             "FROM products p LEFT JOIN inventory_events e ON e.sku = p.sku "
+0778:             "GROUP BY p.sku, p.stock ORDER BY p.sku",
+0779:         )
+0780:         return [{"sku": row["sku"], "stock": row["stock"],
+0781:                  "ledger_stock": row["ledger_stock"],
+0782:                  "matches": row["stock"] == row["ledger_stock"]} for row in rows]
+0783: 
+0784:     def export_orders(self, path: Path, start: str, end: str) -> dict:
+0785:         lower, upper = self.date_bounds(start, end)
+0786:         if not path.parent.is_dir():
+0787:             raise ServiceError("Export directory does not exist")
+0788:         rows = self.db.all(
+0789:             "SELECT order_id, customer_id, status, subtotal_cents, discount_cents, "
+0790:             "shipping_cents, tax_cents, total_cents, created_at FROM orders "
+0791:             "WHERE created_at >= ? AND created_at < ? ORDER BY created_at, order_id",
+0792:             (lower, upper),
+0793:         )
+0794:         columns = ["order_id", "customer_id", "status", "subtotal_cents", "discount_cents",
+0795:                    "shipping_cents", "tax_cents", "total_cents", "created_at"]
+0796:         with path.open("x", encoding="utf-8", newline="") as stream:
+0797:             writer = csv.DictWriter(stream, fieldnames=columns)
+0798:             writer.writeheader()
+0799:             writer.writerows(dict(row) for row in rows)
+0800:         return {"path": str(path), "row_count": len(rows)}
+0801: 
+0802:     def health(self) -> dict:
+0803:         integrity = self.db.one("PRAGMA integrity_check")[0]
+0804:         foreign_key_errors = self.db.all("PRAGMA foreign_key_check")
+0805:         stock = self.reconcile_inventory()
+0806:         return {
+0807:             "schema_version": SCHEMA_VERSION,
+0808:             "sqlite_integrity": integrity,
+0809:             "foreign_key_errors": len(foreign_key_errors),
+0810:             "inventory_mismatches": [item for item in stock if not item["matches"]],
+0811:             "status_counts": self.status_counts(),
+0812:         }
+0813: 
+0814: 
+0815: DEMO_CUSTOMERS = (
+0816:     ("C-100", "Northwind Workshop", "north", 1),
+0817:     ("C-200", "Riverbank Studio", "south", 1),
+0818:     ("C-300", "Closed Demo Account", "north", 0),
+0819: )
+0820: DEMO_PRODUCTS = (
+0821:     ("MUG", "Ceramic mug", "home", 1000, 30, 1),
+0822:     ("BOOK", "Plain notebook", "office", 1500, 40, 1),
+0823:     ("BAG", "Canvas bag", "travel", 4500, 12, 1),
+0824:     ("LAMP", "Desk lamp", "home", 6500, 8, 1),
+0825:     ("PEN", "Blue pen", "office", 250, 100, 1),
+0826:     ("OLD", "Retired sample", "office", 500, 5, 0),
+0827: )
+0828: DEMO_COUPONS = (
+0829:     ("SAVE10", 1000, 1000, 5000, "2026-12-31", 100, 1),
+0830:     ("HALF", 5000, 10000, 20000, "2026-12-31", 5, 1),
+0831:     ("EXPIRED", 1000, 0, 5000, "2025-12-31", 100, 1),
+0832: )
+0833: 
+0834: 
+0835: def seed_demo(db: Database, now: datetime) -> dict:
+0836:     with db.transaction():
+0837:         if db.one("SELECT value FROM metadata WHERE key = 'seeded'"):
+0838:             return {"seeded": False, "message": "Demo data already exists"}
+0839:         for customer in DEMO_CUSTOMERS:
+0840:             db.execute("INSERT INTO customers(customer_id, name, region, active) "
+0841:                        "VALUES (?, ?, ?, ?)", customer)
+0842:         for product in DEMO_PRODUCTS:
+0843:             db.execute("INSERT INTO products(sku, name, category, price_cents, stock, "
+0844:                        "active, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+0845:                        product + (timestamp(now),))
+0846:             db.inventory_event(product[0], product[4], "opening_stock", now)
+0847:         for coupon in DEMO_COUPONS:
+0848:             db.execute("INSERT INTO coupons(code, basis_points, minimum_cents, "
+0849:                        "max_discount_cents, expires_on, max_uses, active) "
+0850:                        "VALUES (?, ?, ?, ?, ?, ?, ?)", coupon)
+0851:         db.execute("INSERT INTO metadata(key, value) VALUES ('seeded', ?)", (timestamp(now),))
+0852:         db.audit("database", "demo", "seeded", {"products": len(DEMO_PRODUCTS)}, now)
+0853:     return {"seeded": True, "customers": len(DEMO_CUSTOMERS),
+0854:             "products": len(DEMO_PRODUCTS), "coupons": len(DEMO_COUPONS)}
+0855: 
+0856: 
+0857: def import_orders(db: Database, path: Path, now: datetime) -> dict:
+0858:     if path.stat().st_size > 1_000_000:
+0859:         raise ServiceError("Import exceeds 1000000 bytes")
+0860:     service = OrderService(db)
+0861:     accepted = []
+0862:     rejected = []
+0863:     with path.open(encoding="utf-8") as stream:
+0864:         for number, line in enumerate(stream, 1):
+0865:             if not line.strip():
+0866:                 continue
+0867:             if number > 1000:
+0868:                 rejected.append({"line": number, "error": "Import line limit reached"})
+0869:                 break
+0870:             try:
+0871:                 value = json.loads(line)
+0872:                 if not isinstance(value, dict):
+0873:                     raise ServiceError("Each line must be an object")
+0874:                 request = CheckoutRequest.from_dict(value)
+0875:                 order = service.checkout(request, now)
+0876:                 accepted.append({"line": number, "order_id": order["order_id"]})
+0877:             except (ServiceError, json.JSONDecodeError) as exc:
+0878:                 rejected.append({"line": number, "error": str(exc)})
+0879:     return {"accepted": accepted, "rejected": rejected}
+0880: 
+0881: 
+0882: def build_parser() -> argparse.ArgumentParser:
+0883:     parser = argparse.ArgumentParser(description="Local demo order-processing service")
+0884:     parser.add_argument("--db", type=Path, default=Path("practice.db"))
+0885:     parser.add_argument("--at", help="ISO timestamp for reproducible cases")
+0886:     parser.add_argument("--verbose", action="store_true")
+0887:     commands = parser.add_subparsers(dest="command", required=True)
+0888:     commands.add_parser("seed", help="Create fictional customers, products and coupons")
+0889:     catalog = commands.add_parser("catalog", help="List product prices and stock")
+0890:     catalog.add_argument("--category")
+0891:     catalog.add_argument("--include-inactive", action="store_true")
+0892:     for name in ("quote", "checkout"):
+0893:         command = commands.add_parser(name)
+0894:         command.add_argument("--request", type=Path, required=True)
+0895:     order = commands.add_parser("order", help="View one order")
+0896:     order.add_argument("order_id")
+0897:     orders = commands.add_parser("orders", help="List recent orders")
+0898:     orders.add_argument("--customer")
+0899:     orders.add_argument("--status", choices=sorted(VALID_STATUSES))
+0900:     orders.add_argument("--limit", type=int, default=50)
+0901:     cancel = commands.add_parser("cancel", help="Cancel an unshipped order")
+0902:     cancel.add_argument("order_id")

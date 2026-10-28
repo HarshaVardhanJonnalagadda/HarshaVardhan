@@ -1,0 +1,8 @@
+{
+  "previous_run": "/Users/harshavardhanjonnalagadda/Desktop/Code Review Agent /reviews/20261027T162446Z_2c17c79d5b6f4b1f8f3541eb0035e4f6",
+  "reused_sections": [
+    1,
+    2
+  ],
+  "note": "Reused calls were validated against saved prompts and parsed raw responses. No API call was repeated for these sections."
+}

@@ -1,0 +1,139 @@
+0328:             raise ServiceError("Database directory does not exist")
+0329:         self.path = path
+0330:         self.connection = sqlite3.connect(str(path), isolation_level=None, timeout=5)
+0331:         self.connection.row_factory = sqlite3.Row
+0332:         self.connection.execute("PRAGMA foreign_keys = ON")
+0333: 
+0334:     def close(self) -> None:
+0335:         self.connection.close()
+0336: 
+0337:     def initialize(self) -> None:
+0338:         self.connection.executescript(SCHEMA)
+0339:         current = self.one("SELECT value FROM metadata WHERE key = ?", ("schema",))
+0340:         if current and int(current["value"]) != SCHEMA_VERSION:
+0341:             raise Conflict("Unsupported database schema version")
+0342:         self.execute("INSERT OR IGNORE INTO metadata(key, value) VALUES (?, ?)",
+0343:                      ("schema", str(SCHEMA_VERSION)))
+0344: 
+0345:     def execute(self, sql: str, parameters: tuple = ()) -> sqlite3.Cursor:
+0346:         return self.connection.execute(sql, parameters)
+0347: 
+0348:     def one(self, sql: str, parameters: tuple = ()) -> sqlite3.Row | None:
+0349:         return self.execute(sql, parameters).fetchone()
+0350: 
+0351:     def all(self, sql: str, parameters: tuple = ()) -> list[sqlite3.Row]:
+0352:         return self.execute(sql, parameters).fetchall()
+0353: 
+0354:     @contextmanager
+0355:     def transaction(self) -> Iterator[None]:
+0356:         self.execute("BEGIN IMMEDIATE")
+0357:         try:
+0358:             yield
+0359:         except BaseException:
+0360:             self.execute("ROLLBACK")
+0361:             raise
+0362:         else:
+0363:             self.execute("COMMIT")
+0364: 
+0365:     def audit(self, kind: str, entity_id: str, action: str,
+0366:               detail: dict[str, Any], now: datetime) -> None:
+0367:         self.execute(
+0368:             "INSERT INTO audit_events(entity_type, entity_id, action, detail_json, "
+0369:             "created_at) VALUES (?, ?, ?, ?, ?)",
+0370:             (kind, entity_id, action, canonical_json(detail), timestamp(now)),
+0371:         )
+0372: 
+0373:     def customer(self, customer_id: str) -> Customer:
+0374:         row = self.one("SELECT * FROM customers WHERE customer_id = ?", (customer_id,))
+0375:         if row is None:
+0376:             raise NotFound(f"Unknown customer: {customer_id}")
+0377:         return Customer.from_row(row)
+0378: 
+0379:     def product(self, sku: str) -> Product:
+0380:         row = self.one("SELECT * FROM products WHERE sku = ?", (sku,))
+0381:         if row is None:
+0382:             raise NotFound(f"Unknown SKU: {sku}")
+0383:         return Product.from_row(row)
+0384: 
+0385:     def order(self, order_id: str) -> sqlite3.Row:
+0386:         row = self.one("SELECT * FROM orders WHERE order_id = ?", (order_id,))
+0387:         if row is None:
+0388:             raise NotFound(f"Unknown order: {order_id}")
+0389:         return row
+0390: 
+0391:     def lines(self, order_id: str) -> list[sqlite3.Row]:
+0392:         return self.all("SELECT * FROM order_lines WHERE order_id = ? ORDER BY sku",
+0393:                         (order_id,))
+0394: 
+0395:     def inventory_event(self, sku: str, delta: int, reason: str,
+0396:                         now: datetime, order_id: str | None = None) -> None:
+0397:         self.execute(
+0398:             "INSERT INTO inventory_events(sku, order_id, delta, reason, created_at) "
+0399:             "VALUES (?, ?, ?, ?, ?)",
+0400:             (sku, order_id, delta, reason, timestamp(now)),
+0401:         )
+0402: 
+0403:     def refund_total(self, order_id: str) -> int:
+0404:         row = self.one("SELECT COALESCE(SUM(amount_cents), 0) AS amount "
+0405:                        "FROM refunds WHERE order_id = ?", (order_id,))
+0406:         return int(row["amount"])
+0407: 
+0408: 
+0409: class CatalogService:
+0410:     def __init__(self, db: Database):
+0411:         self.db = db
+0412: 
+0413:     def list_products(self, category: str | None = None,
+0414:                       include_inactive: bool = False) -> list[dict[str, Any]]:
+0415:         conditions = []
+0416:         values: list[Any] = []
+0417:         if not include_inactive:
+0418:             conditions.append("active = 1")
+0419:         if category:
+0420:             conditions.append("category = ?")
+0421:             values.append(category)
+0422:         sql = "SELECT * FROM products"
+0423:         if conditions:
+0424:             sql += " WHERE " + " AND ".join(conditions)
+0425:         sql += " ORDER BY category, sku"
+0426:         return [dict(row) for row in self.db.all(sql, tuple(values))]
+0427: 
+0428:     def update_price(self, sku: str, price_cents: int, now: datetime) -> dict:
+0429:         integer(price_cents, "price_cents", 0, 10_000_000)
+0430:         with self.db.transaction():
+0431:             product = self.db.product(sku)
+0432:             self.db.execute("UPDATE products SET price_cents = ?, updated_at = ? "
+0433:                             "WHERE sku = ?", (price_cents, timestamp(now), sku))
+0434:             self.db.audit("product", sku, "price_changed",
+0435:                           {"old": product.price_cents, "new": price_cents}, now)
+0436:         return asdict(self.db.product(sku))
+0437: 
+0438:     def set_active(self, sku: str, active: bool, now: datetime) -> dict:
+0439:         with self.db.transaction():
+0440:             self.db.product(sku)
+0441:             self.db.execute("UPDATE products SET active = ?, updated_at = ? WHERE sku = ?",
+0442:                             (int(active), timestamp(now), sku))
+0443:             self.db.audit("product", sku, "availability_changed", {"active": active}, now)
+0444:         return asdict(self.db.product(sku))
+0445: 
+0446:     def restock(self, sku: str, quantity: int, reason: str, now: datetime) -> dict:
+0447:         integer(quantity, "quantity", 1, 100_000)
+0448:         reason = nonempty(reason, "reason", 200)
+0449:         with self.db.transaction():
+0450:             self.db.product(sku)
+0451:             self.db.execute("UPDATE products SET stock = stock + ?, updated_at = ? "
+0452:                             "WHERE sku = ?", (quantity, timestamp(now), sku))
+0453:             self.db.inventory_event(sku, quantity, reason, now)
+0454:             self.db.audit("product", sku, "restocked", {"quantity": quantity}, now)
+0455:         return asdict(self.db.product(sku))
+0456: 
+0457:     def stock_history(self, sku: str, limit: int = 50) -> list[dict]:
+0458:         integer(limit, "limit", 1, 500)
+0459:         self.db.product(sku)
+0460:         rows = self.db.all("SELECT * FROM inventory_events WHERE sku = ? "
+0461:                            "ORDER BY event_id DESC LIMIT ?", (sku, limit))
+0462:         return [dict(row) for row in rows]
+0463: 
+0464:     def low_stock(self, threshold: int) -> list[dict]:
+0465:         integer(threshold, "threshold", 0, 100_000)
+0466:         rows = self.db.all("SELECT sku, name, stock FROM products "

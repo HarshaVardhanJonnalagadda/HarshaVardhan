@@ -1,0 +1,17 @@
+{
+  "provider": "Groq",
+  "model": "openai/gpt-oss-120b",
+  "outcome": "sections_complete",
+  "expected_sections": 9,
+  "successful_sections": 9,
+  "duration_seconds": 551.939,
+  "usage_totals": {
+    "input_tokens": 25705,
+    "output_tokens": 12077,
+    "total_tokens": 37782
+  },
+  "usage_scope": "Successfully parsed calls only; failed-call usage may be unavailable.",
+  "source_unchanged": true,
+  "human_validation": "pending",
+  "error": null
+}

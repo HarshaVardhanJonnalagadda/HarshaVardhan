@@ -1,0 +1,17 @@
+{
+  "provider": "Groq",
+  "model": "openai/gpt-oss-120b",
+  "outcome": "failed",
+  "expected_sections": 9,
+  "successful_sections": 6,
+  "duration_seconds": 353.568,
+  "usage_totals": {
+    "input_tokens": 17838,
+    "output_tokens": 13807,
+    "total_tokens": 31645
+  },
+  "usage_scope": "Successfully parsed calls only; failed-call usage may be unavailable.",
+  "source_unchanged": true,
+  "human_validation": "pending",
+  "error": "Response was incomplete or its completion status was unknown."
+}

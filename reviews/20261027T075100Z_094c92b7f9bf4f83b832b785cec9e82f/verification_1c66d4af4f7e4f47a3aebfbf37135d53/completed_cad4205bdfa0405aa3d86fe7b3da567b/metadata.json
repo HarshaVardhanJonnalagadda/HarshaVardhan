@@ -1,0 +1,13 @@
+{
+  "outcome": "verification_calls_complete",
+  "provider": "Groq",
+  "model": "openai/gpt-oss-120b",
+  "successful_tasks": 23,
+  "usage_totals": {
+    "input_tokens": 56024,
+    "output_tokens": 13511,
+    "total_tokens": 69535
+  },
+  "usage_scope": "Successful verification tasks, including reused results. Failed attempts and earlier review stages are excluded.",
+  "human_validation": "pending"
+}

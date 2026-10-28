@@ -1,0 +1,1 @@
+Review this code for bugs. Focus on mistakes that could change totals or stock. Explain the most important findings and what I should check next.

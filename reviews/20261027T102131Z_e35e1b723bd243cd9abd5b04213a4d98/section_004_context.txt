@@ -1,0 +1,137 @@
+0452:                             "WHERE sku = ?", (quantity, timestamp(now), sku))
+0453:             self.db.inventory_event(sku, quantity, reason, now)
+0454:             self.db.audit("product", sku, "restocked", {"quantity": quantity}, now)
+0455:         return asdict(self.db.product(sku))
+0456: 
+0457:     def stock_history(self, sku: str, limit: int = 50) -> list[dict]:
+0458:         integer(limit, "limit", 1, 500)
+0459:         self.db.product(sku)
+0460:         rows = self.db.all("SELECT * FROM inventory_events WHERE sku = ? "
+0461:                            "ORDER BY event_id DESC LIMIT ?", (sku, limit))
+0462:         return [dict(row) for row in rows]
+0463: 
+0464:     def low_stock(self, threshold: int) -> list[dict]:
+0465:         integer(threshold, "threshold", 0, 100_000)
+0466:         rows = self.db.all("SELECT sku, name, stock FROM products "
+0467:                            "WHERE active = 1 AND stock <= ? ORDER BY stock, sku",
+0468:                            (threshold,))
+0469:         return [dict(row) for row in rows]
+0470: 
+0471: 
+0472: class PricingService:
+0473:     def __init__(self, db: Database):
+0474:         self.db = db
+0475: 
+0476:     def price_lines(self, lines: tuple[CartLine, ...]) -> tuple[PricedLine, ...]:
+0477:         result = []
+0478:         for line in lines:
+0479:             product = self.db.product(line.sku)
+0480:             if not product.active:
+0481:                 raise Conflict(f"Product is unavailable: {line.sku}")
+0482:             if product.stock < line.quantity:
+0483:                 raise Conflict(f"Insufficient stock for {line.sku}")
+0484:             result.append(PricedLine(
+0485:                 sku=product.sku,
+0486:                 name=product.name,
+0487:                 quantity=line.quantity,
+0488:                 unit_price_cents=product.price_cents,
+0489:                 line_total_cents=product.price_cents * line.quantity,
+0490:             ))
+0491:         return tuple(result)
+0492: 
+0493:     def coupon_discount(self, code: str | None, subtotal: int, now: datetime) -> int:
+0494:         if code is None:
+0495:             return 0
+0496:         row = self.db.one("SELECT * FROM coupons WHERE code = ?", (code,))
+0497:         if row is None or not row["active"]:
+0498:             raise Conflict("Coupon is not available")
+0499:         expires = parse_day(row["expires_on"])
+0500:         if now.date() > expires:
+0501:             raise Conflict("Coupon has expired")
+0502:         if subtotal < row["minimum_cents"]:
+0503:             raise Conflict("Order does not meet coupon minimum")
+0504:         usage = self.db.one("SELECT COUNT(*) AS count FROM orders "
+0505:                             "WHERE coupon = ? AND status != 'cancelled'", (code,))
+0506:         if usage["count"] >= row["max_uses"]:
+0507:             raise Conflict("Coupon usage limit reached")
+0508:         discount = percentage(subtotal, row["basis_points"])
+0509:         return min(discount, row["max_discount_cents"], subtotal)
+0510: 
+0511:     def shipping_cost(self, method: str, subtotal: int, discount: int) -> int:
+0512:         if method == "pickup":
+0513:             return 0
+0514:         if method == "standard" and subtotal >= FREE_SHIPPING_CENTS:
+0515:             return 0
+0516:         return SHIPPING_CENTS[method]
+0517: 
+0518:     def quote(self, request: CheckoutRequest, now: datetime) -> Quote:
+0519:         customer = self.db.customer(request.customer_id)
+0520:         if not customer.active:
+0521:             raise Conflict("Customer account is inactive")
+0522:         lines = self.price_lines(request.lines)
+0523:         subtotal = sum(line.unit_price_cents for line in lines)
+0524:         discount = self.coupon_discount(request.coupon, subtotal, now)
+0525:         shipping = self.shipping_cost(request.shipping, subtotal, discount)
+0526:         taxable = max(subtotal - discount, 0)
+0527:         tax = percentage(taxable, TAX_BASIS_POINTS)
+0528:         return Quote(
+0529:             lines=lines,
+0530:             subtotal_cents=subtotal,
+0531:             discount_cents=discount,
+0532:             shipping_cents=shipping,
+0533:             tax_cents=tax,
+0534:             total_cents=taxable + tax + shipping,
+0535:             coupon=request.coupon,
+0536:         )
+0537: 
+0538: 
+0539: class OrderService:
+0540:     def __init__(self, db: Database):
+0541:         self.db = db
+0542:         self.pricing = PricingService(db)
+0543: 
+0544:     def view(self, order_id: str) -> dict[str, Any]:
+0545:         result = dict(self.db.order(order_id))
+0546:         result.pop("request_hash")
+0547:         result["items"] = [dict(row) for row in self.db.lines(order_id)]
+0548:         result["refunded_cents"] = self.db.refund_total(order_id)
+0549:         result["formatted_total"] = format_money(result["total_cents"])
+0550:         shipment = self.db.one("SELECT * FROM shipments WHERE order_id = ?", (order_id,))
+0551:         result["shipment"] = dict(shipment) if shipment else None
+0552:         return result
+0553: 
+0554:     def list_orders(self, customer_id: str | None = None,
+0555:                     status: str | None = None, limit: int = 50) -> list[dict]:
+0556:         integer(limit, "limit", 1, 500)
+0557:         clauses = []
+0558:         values: list[Any] = []
+0559:         if customer_id:
+0560:             self.db.customer(customer_id)
+0561:             clauses.append("customer_id = ?")
+0562:             values.append(customer_id)
+0563:         if status:
+0564:             if status not in VALID_STATUSES:
+0565:                 raise ServiceError("Unknown order status")
+0566:             clauses.append("status = ?")
+0567:             values.append(status)
+0568:         sql = "SELECT order_id, customer_id, status, total_cents, created_at FROM orders"
+0569:         if clauses:
+0570:             sql += " WHERE " + " AND ".join(clauses)
+0571:         sql += " ORDER BY created_at DESC, order_id LIMIT ?"
+0572:         values.append(limit)
+0573:         return [dict(row) for row in self.db.all(sql, tuple(values))]
+0574: 
+0575:     def checkout(self, request: CheckoutRequest, now: datetime) -> dict:
+0576:         with self.db.transaction():
+0577:             existing = self.db.one("SELECT * FROM orders WHERE request_id = ?",
+0578:                                    (request.request_id,))
+0579:             if existing:
+0580:                 if existing["request_hash"] != request.fingerprint():
+0581:                     raise Conflict("Request ID was already used with different input")
+0582:                 order_id = existing["order_id"]
+0583:             else:
+0584:                 quote = self.pricing.quote(request, now)
+0585:                 order_id = "ORD-" + payload_hash(request.request_id)[:12].upper()
+0586:                 self._insert_order(order_id, request, quote, now)
+0587:                 for line in quote.lines:
+0588:                     self._reserve_line(order_id, line, now)

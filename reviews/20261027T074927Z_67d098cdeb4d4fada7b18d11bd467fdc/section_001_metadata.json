@@ -1,0 +1,10 @@
+{
+  "outcome": "failed",
+  "error": "Groq HTTP 401: Check your Groq API key.",
+  "duration_seconds": 0.106,
+  "usage": {
+    "input_tokens": "unknown",
+    "output_tokens": "unknown",
+    "total_tokens": "unknown"
+  }
+}

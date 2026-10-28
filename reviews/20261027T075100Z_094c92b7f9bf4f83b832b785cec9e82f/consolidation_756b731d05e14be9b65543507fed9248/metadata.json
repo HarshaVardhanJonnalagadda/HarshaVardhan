@@ -1,0 +1,17 @@
+{
+  "provider": "Groq",
+  "model": "openai/gpt-oss-120b",
+  "outcome": "failed",
+  "successful_merges": 4,
+  "expected_merges": 9,
+  "duration_seconds": 352.312,
+  "usage_totals": {
+    "input_tokens": 13435,
+    "output_tokens": 8758,
+    "total_tokens": 22193
+  },
+  "usage_scope": "Consolidation calls only; original section-call usage is recorded in the parent run.",
+  "human_validation": "pending",
+  "original_source_supplied_to_consolidator": false,
+  "error": "Response was incomplete or its completion status was unknown."
+}

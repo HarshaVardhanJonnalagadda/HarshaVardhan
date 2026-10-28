@@ -1,0 +1,10 @@
+{
+  "outcome": "failed",
+  "error": "Groq HTTP 429: Rate limit or quota reached.",
+  "duration_seconds": 0.103,
+  "usage": {
+    "input_tokens": "unknown",
+    "output_tokens": "unknown",
+    "total_tokens": "unknown"
+  }
+}

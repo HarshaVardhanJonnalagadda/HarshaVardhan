@@ -1,0 +1,1 @@
+Why does a cancelled order still appear in the sales report?
