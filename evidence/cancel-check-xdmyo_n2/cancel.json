@@ -1,0 +1,28 @@
+{
+  "coupon": null,
+  "created_at": "2026-10-26T10:00:00+00:00",
+  "customer_id": "C-200",
+  "discount_cents": 0,
+  "formatted_total": "16.50",
+  "items": [
+    {
+      "line_total_cents": 1500,
+      "name": "Plain notebook",
+      "order_id": "ORD-881DF93EA1F6",
+      "quantity": 1,
+      "sku": "BOOK",
+      "unit_price_cents": 1500
+    }
+  ],
+  "order_id": "ORD-881DF93EA1F6",
+  "refunded_cents": 0,
+  "request_id": "cancel-001",
+  "shipment": null,
+  "shipping_cents": 0,
+  "shipping_method": "pickup",
+  "status": "cancelled",
+  "subtotal_cents": 1500,
+  "tax_cents": 150,
+  "total_cents": 1650,
+  "updated_at": "2026-10-26T10:00:00+00:00"
+}

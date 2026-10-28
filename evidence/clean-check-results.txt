@@ -1,0 +1,121 @@
+Clean checkout checks using the current Python environment.
+GROQ_API_KEY removed; no live inference calls.
+Dependency installation in a fresh environment was not tested.
+
+## Committed test suite
+Expected exit: 0
+Actual exit: 0
+Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpvi96z8n0/consolidation_f27f2bc419c34085b2135be13423f48c
+Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpm0g_nj2i/consolidation_f96149a8e03b443e964826bb84f8fcaa
+Waiting 0s before merge 1/2...
+Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmphpd4o_y_/consolidation_0f4cfe1b39944096a7b1acff9aaf98ac
+Waiting 0s before merge 1/2...
+Waiting 0s before merge 2/2...
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmphz5dyk8s/reviews/20261028T070151Z_deefdaf2e0eb4cfa9b4c770eff3cc8ec
+Source: 1 lines, 1 sections
+Prepared section_001; no API call.
+Dry run complete. No API calls made.
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp13o1ypod/reviews/20261028T070151Z_f4928ec353e345d69b29fd086c5417ad
+Source: 1 lines, 1 sections
+Prepared section_001; no API call.
+Dry run complete. No API calls made.
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp13o1ypod/reviews/20261028T070151Z_337f9bd8d87a48a6b21673a593815a6d
+Source: 1 lines, 1 sections
+Prepared section_001; no API call.
+Dry run complete. No API calls made.
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp6zbqj9i5/reviews/20261028T070151Z_332b1adea76b409097edffe4a1ac5a10
+Source: 1 lines, 1 sections
+Reviewing 1/1 (lines 1-1)...
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpwzeowmk8/reviews/20261028T070151Z_8c89aac9da4243fba5ca957d54a5eac9
+Source: 1 lines, 1 sections
+Reviewing 1/1 (lines 1-1)...
+Section reviews saved. Consolidation and human validation remain pending.
+Task 1: 3268 estimated tokens — ELIGIBLE
+Waiting 0s before verification 1...
+Verification 1 saved.
+Assessments saved: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpa_saekmy/verification_test/completed_e230c874b7864643a653a1f1cd90947d/verification_report.md
+Task 1: 3268 estimated tokens — ELIGIBLE
+Reusing verification 1.
+Assessments saved: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpa_saekmy/verification_test/completed_77f91782bc814236b6c4257d42f26346/verification_report.md
+test_failed_sections_are_rejected (test_consolidate.ConsolidationTests.test_failed_sections_are_rejected) ... ok
+test_oversized_input_is_not_silently_truncated (test_consolidate.ConsolidationTests.test_oversized_input_is_not_silently_truncated) ... ok
+test_provider_failure_produces_no_final_report (test_consolidate.ConsolidationTests.test_provider_failure_produces_no_final_report) ... ok
+test_success_saves_report_and_evidence (test_consolidate.ConsolidationTests.test_success_saves_report_and_evidence) ... ok
+test_dependency_depth_limit_is_reported (test_context_integrity.ContextIntegrityTests.test_dependency_depth_limit_is_reported) ... ok
+test_distant_validation_is_retrieved_together (test_context_integrity.ContextIntegrityTests.test_distant_validation_is_retrieved_together) ... ok
+test_oversized_evidence_is_not_split (test_context_integrity.ContextIntegrityTests.test_oversized_evidence_is_not_split) ... ok
+test_absent_usage_remains_unknown (test_failed_usage.FailedUsageTests.test_absent_usage_remains_unknown) ... ok
+test_invalid_counts_are_not_accepted (test_failed_usage.FailedUsageTests.test_invalid_counts_are_not_accepted) ... ok
+test_truncated_response_preserves_available_usage (test_failed_usage.FailedUsageTests.test_truncated_response_preserves_available_usage) ... ok
+test_connection_failure_is_provider_error (test_provider.ProviderTests.test_connection_failure_is_provider_error) ... ok
+test_http_error_redacts_key_and_preserves_retry_hint (test_provider.ProviderTests.test_http_error_redacts_key_and_preserves_retry_hint) ... ok
+test_invalid_usage_counts_remain_unknown (test_provider.ProviderTests.test_invalid_usage_counts_remain_unknown) ... ok
+test_malformed_response_preserves_raw_evidence (test_provider.ProviderTests.test_malformed_response_preserves_raw_evidence) ... ok
+test_missing_key_prevents_network_call (test_provider.ProviderTests.test_missing_key_prevents_network_call) ... ok
+test_successful_http_response (test_provider.ProviderTests.test_successful_http_response) ... ok
+test_blank_request (test_reviewer.ReviewerTests.test_blank_request) ... ok
+test_dry_run_never_calls_provider (test_reviewer.ReviewerTests.test_dry_run_never_calls_provider) ... ok
+test_each_run_has_a_unique_folder (test_reviewer.ReviewerTests.test_each_run_has_a_unique_folder) ... ok
+test_empty_malformed_and_truncated_responses (test_reviewer.ReviewerTests.test_empty_malformed_and_truncated_responses) ... ok
+test_invalid_text_and_python (test_reviewer.ReviewerTests.test_invalid_text_and_python) ... ok
+test_missing_and_unreadable_source (test_reviewer.ReviewerTests.test_missing_and_unreadable_source) ... ok
+test_no_overwriting (test_reviewer.ReviewerTests.test_no_overwriting) ... ok
+test_provider_failure_is_not_success (test_reviewer.ReviewerTests.test_provider_failure_is_not_success) ... Incomplete: TEST HTTP 429
+Inspect evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp6zbqj9i5/reviews/20261028T070151Z_332b1adea76b409097edffe4a1ac5a10
+ok
+test_sections_cover_all_lines (test_reviewer.ReviewerTests.test_sections_cover_all_lines) ... ok
+test_source_hash_matches_original_bytes (test_reviewer.ReviewerTests.test_source_hash_matches_original_bytes) ... ok
+test_success_and_source_preservation (test_reviewer.ReviewerTests.test_success_and_source_preservation) ... ok
+test_unknown_usage_stays_unknown (test_reviewer.ReviewerTests.test_unknown_usage_stays_unknown) ... ok
+test_saved_success_is_reused (test_verification.VerificationTests.test_saved_success_is_reused) ... ok
+test_capitalized_name_matches_function (test_verification_context.RetrievalTests.test_capitalized_name_matches_function) ... ok
+test_helper_included_and_unrelated_function_excluded (test_verification_context.RetrievalTests.test_helper_included_and_unrelated_function_excluded) ... ok
+test_complete_verification_returns_zero (test_verification_exit.VerificationExitTests.test_complete_verification_returns_zero) ... ok
+test_dry_run_needs_no_summary_metadata (test_verification_exit.VerificationExitTests.test_dry_run_needs_no_summary_metadata) ... ok
+test_incomplete_verification_returns_nonzero (test_verification_exit.VerificationExitTests.test_incomplete_verification_returns_nonzero) ... Verification is incomplete; inspect the saved report.
+ok
+
+----------------------------------------------------------------------
+Ran 34 tests in 0.127s
+
+OK
+
+
+## Supplied-file dry run without API key
+Expected exit: 0
+Actual exit: 0
+Evidence folder: reviews/20261028T070152Z_bc4523c9ba3e4aa99f034735a6c3f089
+Source: 1060 lines, 9 sections
+Prepared section_001; no API call.
+Prepared section_002; no API call.
+Prepared section_003; no API call.
+Prepared section_004; no API call.
+Prepared section_005; no API call.
+Prepared section_006; no API call.
+Prepared section_007; no API call.
+Prepared section_008; no API call.
+Prepared section_009; no API call.
+Dry run complete. No API calls made.
+
+
+## Blank request rejected
+Expected exit: 1
+Actual exit: 1
+Error: Provide a nonblank request without NUL characters.
+
+
+## Missing source rejected
+Expected exit: 1
+Actual exit: 1
+Error: Cannot read missing_example.py: No such file or directory
+
+
+## Missing API key reported as failure
+Expected exit: 1
+Actual exit: 1
+Evidence folder: reviews/20261028T070152Z_aabffb7ae6af453695e896c2b701c565
+Source: 13 lines, 1 sections
+Reviewing 1/1 (lines 1-13)...
+Incomplete: GROQ_API_KEY is not set.
+Inspect evidence: reviews/20261028T070152Z_aabffb7ae6af453695e896c2b701c565
+

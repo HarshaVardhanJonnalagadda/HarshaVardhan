@@ -278,3 +278,7 @@ calculating usage across resumed runs.
 Historical evidence has not been rewritten to reflect later fixes.
 
 Selected completed-run usage is summarized in [evidence/usage-summary.md](evidence/usage-summary.md).
+
+Later manual runtime checks reproduced the order-total and cancelled-sales
+defects; see [evidence/runtime-validation.md](evidence/runtime-validation.md).
+Other findings have not been runtime-reproduced, and no fixes were verified.

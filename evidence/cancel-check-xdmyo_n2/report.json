@@ -1,0 +1,13 @@
+{
+  "average_order_cents": 1650,
+  "currency": "USD",
+  "discount_cents": 0,
+  "end": "2026-10-26",
+  "gross_cents": 1650,
+  "net_cents": 1650,
+  "order_count": 1,
+  "refunded_cents": 0,
+  "shipping_cents": 0,
+  "start": "2026-10-26",
+  "tax_cents": 150
+}
