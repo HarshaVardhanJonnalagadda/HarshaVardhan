@@ -206,7 +206,7 @@ python -m unittest discover -s tests -v > evidence/test-results.txt 2>&1
 cat evidence/test-results.txt
 ```
 
-The latest recorded test run passed 34 tests.
+The latest recorded test run passed 53 tests.
 The saved output is evidence/test-results.txt.
 
 Tests use simulated provider responses. Passing tests do not establish
@@ -290,12 +290,19 @@ and multiline strings when they fit within the section limit.
 Oversized functions may still be split; affected sections carry a
 partial_function flag that is included in the model prompt.
 
-The upgrade suite passed 40 tests.
-Results: evidence/upgrade-test-results.txt.
+The current full suite passed 53 tests.
+Results: evidence/test-results.txt.
 
-This change has not yet been evaluated with fresh model reviews,
-so a reduction in false positives has not been demonstrated.
-Helpers and callers may still be outside a section.
+Fresh model reviews and targeted verification were evaluated.
+Verification planning now retrieves up to two caller levels, but
+helper and caller context remains bounded and approximate.
+
+The latest targeted assessment correctly refuted the missing-file
+claim but incorrectly supported the partial-seeding claim despite
+supplied transaction counter-evidence. Human validation remains
+required. Original finding 11 remains blocked by the token budget.
+
+These results do not establish a general reduction in false positives.
 
 Historical review evidence remains unchanged. Changed section boundaries
 and prompts prevent safe reuse of earlier review responses; start a

@@ -1,0 +1,10 @@
+{
+  "outcome": "failed",
+  "error": "Response was incomplete or its completion status was unknown.",
+  "duration_seconds": 5.878,
+  "usage": {
+    "input_tokens": 2402,
+    "output_tokens": 2500,
+    "total_tokens": 4902
+  }
+}

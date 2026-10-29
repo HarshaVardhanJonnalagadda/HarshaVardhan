@@ -1,0 +1,10 @@
+{
+  "outcome": "failed",
+  "error": "Groq HTTP 429: Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m5xyqyxbep5bwm577d07gxyh` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198483, Requested 2614. Please try again in 7m53.904s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing | Limit details: {\"retry-after\": \"474\", \"x-ratelimit-limit-requests\": \"1000\", \"x-ratelimit-limit-tokens\": \"8000\", \"x-ratelimit-remaining-requests\": \"995\", \"x-ratelimit-remaining-tokens\": \"8000\", \"x-ratelimit-reset-requests\": \"7m12s\", \"x-ratelimit-reset-tokens\": \"1ms\"}",
+  "duration_seconds": 0.228,
+  "usage": {
+    "input_tokens": "unknown",
+    "output_tokens": "unknown",
+    "total_tokens": "unknown"
+  }
+}

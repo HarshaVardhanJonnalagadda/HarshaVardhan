@@ -12,41 +12,52 @@ from verification_context import build_verification_context
 
 
 def extract_findings(report):
-    """Extract finding rows from the Important findings Markdown table."""
+    """Extract severity-table rows from consolidated or section reports."""
     findings = []
+    seen = set()
     in_findings = False
+    severities = {
+        "critical", "high", "medium", "low",
+        "info", "informational",
+    }
 
-    for line in report.splitlines():
-        heading = line.strip().lstrip("*").strip()
+    for original_line in report.splitlines():
+        normalized = re.sub(r"\\([*#|`])", r"\1", original_line)
+        heading = normalized.replace("*", "").strip()
+        match = re.match(r"^(#{1,6})\s+(.+?)\s*$", heading)
 
-        if heading.startswith("## Important findings"):
-            in_findings = True
+        if match:
+            title = match.group(2).strip().rstrip("#").strip().casefold()
+            in_findings = title in {"findings", "important findings"}
             continue
-
-        if in_findings and heading.startswith("## "):
-            break
 
         if not in_findings:
             continue
 
-        row = line.strip().replace("\\|", "|")
+        row = normalized.strip()
         if not row.startswith("|"):
             continue
 
-        cells = [cell.strip() for cell in row.strip("|").split("|")]
-
+        cells = [
+            cell.strip()
+            for cell in row.strip("|").split("|")
+        ]
         if len(cells) < 3:
             continue
 
-        first = cells[0].replace("*", "").strip().lower()
-        if first == "severity" or re.fullmatch(r"[-:\s]+", first):
+        severity = cells[0].replace("*", "").strip().casefold()
+        if severity not in severities:
             continue
 
-        findings.append(line.strip())
+        claim = original_line.strip()
+        if claim not in seen:
+            seen.add(claim)
+            findings.append(claim)
 
     if not findings:
         raise ValueError(
-            "No finding rows found. The report format needs inspection."
+            "No severity-table findings found under Findings or "
+            "Important findings. Prose-only findings require inspection."
         )
 
     return findings
@@ -61,7 +72,6 @@ def source_batches(contexts, max_chars=30000):
         f"\nSOURCE BLOCK: {block['name']}\n{block['context']}"
         for block in contexts
     ]
-
     combined = "\n".join(blocks)
 
     if not combined.strip():
@@ -102,7 +112,6 @@ def prepare(report_path):
         raise ValueError(f"Report file not found: {report_path}")
 
     run = find_run_folder(report_path)
-
     source = load_source(run / "source_snapshot.py")
     report = report_path.read_text(encoding="utf-8")
     request = (run / "request.txt").read_text(encoding="utf-8")
@@ -112,12 +121,13 @@ def prepare(report_path):
     tasks = []
 
     # Prepare every task before creating the output folder.
-    # If any evidence set is too large, stop without API calls.
     for index, finding in enumerate(findings, 1):
         retrieved = build_verification_context(
             source["text"],
             finding,
             include_callers=True,
+            max_depth=1,
+            caller_depth=2,
         )
 
         limitations = list(retrieved["limitations"])
@@ -132,10 +142,22 @@ def prepare(report_path):
         else:
             contexts = retrieved["contexts"]
 
+        planning_blocked = None
+
         try:
             batches = source_batches(contexts)
         except ValueError as exc:
-            raise ValueError(f"Finding {index}: {exc}") from None
+            planning_blocked = str(exc)
+            limitations.append(
+                "Verification blocked: retrieved evidence exceeds "
+                "the planning size limit. No source was split or "
+                "truncated, and no model assessment may be made."
+            )
+            batches = [
+                "Evidence omitted from this blocked request. "
+                "The finding remains unresolved. Original source "
+                "is preserved in source_snapshot.py."
+            ]
 
         if not batches:
             batches = [
@@ -152,6 +174,7 @@ def prepare(report_path):
                 "matched_functions": retrieved["matched_functions"],
                 "source_context": context,
                 "retrieval_limitations": limitations,
+                "planning_blocked": planning_blocked,
             })
 
     output = run / f"verification_{uuid.uuid4().hex}"
@@ -170,6 +193,13 @@ def prepare(report_path):
             "Oversized evidence stops planning; it is never split "
             "or truncated."
         ),
+        "extraction_limitations": [
+            "Only severity-table rows under Findings or Important "
+            "findings are extracted.",
+            "Prose-only findings and uncertainty sections are excluded.",
+            "Each extracted row is assessed as written; accompanying "
+            "prose is not included.",
+        ],
     }
 
     with (output / "plan.json").open("x", encoding="utf-8") as handle:
@@ -178,6 +208,7 @@ def prepare(report_path):
     print("Verification folder:", output)
     print("Findings:", len(findings))
     print("Verification batches:", len(tasks))
+    print("Scope: extracted severity-table rows only.")
     print("No API calls made.")
     return output
 

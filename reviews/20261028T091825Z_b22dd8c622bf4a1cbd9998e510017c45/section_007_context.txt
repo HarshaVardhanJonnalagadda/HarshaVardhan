@@ -1,0 +1,68 @@
+0814: 
+0815: DEMO_CUSTOMERS = (
+0816:     ("C-100", "Northwind Workshop", "north", 1),
+0817:     ("C-200", "Riverbank Studio", "south", 1),
+0818:     ("C-300", "Closed Demo Account", "north", 0),
+0819: )
+0820: DEMO_PRODUCTS = (
+0821:     ("MUG", "Ceramic mug", "home", 1000, 30, 1),
+0822:     ("BOOK", "Plain notebook", "office", 1500, 40, 1),
+0823:     ("BAG", "Canvas bag", "travel", 4500, 12, 1),
+0824:     ("LAMP", "Desk lamp", "home", 6500, 8, 1),
+0825:     ("PEN", "Blue pen", "office", 250, 100, 1),
+0826:     ("OLD", "Retired sample", "office", 500, 5, 0),
+0827: )
+0828: DEMO_COUPONS = (
+0829:     ("SAVE10", 1000, 1000, 5000, "2026-12-31", 100, 1),
+0830:     ("HALF", 5000, 10000, 20000, "2026-12-31", 5, 1),
+0831:     ("EXPIRED", 1000, 0, 5000, "2025-12-31", 100, 1),
+0832: )
+0833: 
+0834: 
+0835: def seed_demo(db: Database, now: datetime) -> dict:
+0836:     with db.transaction():
+0837:         if db.one("SELECT value FROM metadata WHERE key = 'seeded'"):
+0838:             return {"seeded": False, "message": "Demo data already exists"}
+0839:         for customer in DEMO_CUSTOMERS:
+0840:             db.execute("INSERT INTO customers(customer_id, name, region, active) "
+0841:                        "VALUES (?, ?, ?, ?)", customer)
+0842:         for product in DEMO_PRODUCTS:
+0843:             db.execute("INSERT INTO products(sku, name, category, price_cents, stock, "
+0844:                        "active, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+0845:                        product + (timestamp(now),))
+0846:             db.inventory_event(product[0], product[4], "opening_stock", now)
+0847:         for coupon in DEMO_COUPONS:
+0848:             db.execute("INSERT INTO coupons(code, basis_points, minimum_cents, "
+0849:                        "max_discount_cents, expires_on, max_uses, active) "
+0850:                        "VALUES (?, ?, ?, ?, ?, ?, ?)", coupon)
+0851:         db.execute("INSERT INTO metadata(key, value) VALUES ('seeded', ?)", (timestamp(now),))
+0852:         db.audit("database", "demo", "seeded", {"products": len(DEMO_PRODUCTS)}, now)
+0853:     return {"seeded": True, "customers": len(DEMO_CUSTOMERS),
+0854:             "products": len(DEMO_PRODUCTS), "coupons": len(DEMO_COUPONS)}
+0855: 
+0856: 
+0857: def import_orders(db: Database, path: Path, now: datetime) -> dict:
+0858:     if path.stat().st_size > 1_000_000:
+0859:         raise ServiceError("Import exceeds 1000000 bytes")
+0860:     service = OrderService(db)
+0861:     accepted = []
+0862:     rejected = []
+0863:     with path.open(encoding="utf-8") as stream:
+0864:         for number, line in enumerate(stream, 1):
+0865:             if not line.strip():
+0866:                 continue
+0867:             if number > 1000:
+0868:                 rejected.append({"line": number, "error": "Import line limit reached"})
+0869:                 break
+0870:             try:
+0871:                 value = json.loads(line)
+0872:                 if not isinstance(value, dict):
+0873:                     raise ServiceError("Each line must be an object")
+0874:                 request = CheckoutRequest.from_dict(value)
+0875:                 order = service.checkout(request, now)
+0876:                 accepted.append({"line": number, "order_id": order["order_id"]})
+0877:             except (ServiceError, json.JSONDecodeError) as exc:
+0878:                 rejected.append({"line": number, "error": str(exc)})
+0879:     return {"accepted": accepted, "rejected": rejected}
+0880: 
+0881: 

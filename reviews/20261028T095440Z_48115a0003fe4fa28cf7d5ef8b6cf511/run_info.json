@@ -1,0 +1,8 @@
+{
+  "provider": "Groq",
+  "model": "openai/gpt-oss-120b",
+  "source_path": "examples/reviewer_candidate.py",
+  "source_sha256": "12e47f9cc62feb9627d6d34d91da7aad0f12b0de34e4e01fb940a8df05816e94",
+  "source_line_count": 337,
+  "created_at_utc": "2026-10-28T09:54:40.299742+00:00"
+}

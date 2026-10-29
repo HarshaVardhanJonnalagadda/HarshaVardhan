@@ -1,0 +1,9 @@
+{
+  "outcome": "response_complete",
+  "duration_seconds": 2.057,
+  "usage": {
+    "input_tokens": 2869,
+    "output_tokens": 677,
+    "total_tokens": 3546
+  }
+}

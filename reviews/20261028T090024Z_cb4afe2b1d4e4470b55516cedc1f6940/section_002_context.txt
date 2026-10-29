@@ -1,0 +1,168 @@
+0177: 
+0178: 
+0179: @dataclass(frozen=True)
+0180: class CheckoutRequest:
+0181:     customer_id: str
+0182:     lines: tuple[CartLine, ...]
+0183:     shipping: str
+0184:     coupon: str | None
+0185:     request_id: str
+0186: 
+0187:     @classmethod
+0188:     def from_dict(cls, value: dict[str, Any]) -> CheckoutRequest:
+0189:         customer_id = nonempty(value.get("customer_id"), "customer_id", 40)
+0190:         request_id = nonempty(value.get("request_id"), "request_id", 80)
+0191:         raw_lines = value.get("items")
+0192:         if not isinstance(raw_lines, list) or not 1 <= len(raw_lines) <= MAX_CART_LINES:
+0193:             raise ServiceError(f"Cart must contain 1 to {MAX_CART_LINES} lines")
+0194:         lines = tuple(CartLine.from_dict(item) for item in raw_lines)
+0195:         if len({line.sku for line in lines}) != len(lines):
+0196:             raise ServiceError("Combine duplicate SKUs into one cart line")
+0197:         shipping = value.get("shipping", "standard")
+0198:         if not isinstance(shipping, str) or shipping not in SHIPPING_CENTS:
+0199:             raise ServiceError("Shipping must be standard, express or pickup")
+0200:         coupon = value.get("coupon")
+0201:         if coupon is not None:
+0202:             coupon = nonempty(coupon, "coupon", 40).upper()
+0203:         return cls(customer_id, lines, shipping, coupon, request_id)
+0204: 
+0205:     def fingerprint(self) -> str:
+0206:         return payload_hash(asdict(self))
+0207: 
+0208: 
+0209: @dataclass(frozen=True)
+0210: class PricedLine:
+0211:     sku: str
+0212:     name: str
+0213:     quantity: int
+0214:     unit_price_cents: int
+0215:     line_total_cents: int
+0216: 
+0217: 
+0218: @dataclass(frozen=True)
+0219: class Quote:
+0220:     lines: tuple[PricedLine, ...]
+0221:     subtotal_cents: int
+0222:     discount_cents: int
+0223:     shipping_cents: int
+0224:     tax_cents: int
+0225:     total_cents: int
+0226:     coupon: str | None
+0227: 
+0228:     def to_dict(self) -> dict[str, Any]:
+0229:         result = asdict(self)
+0230:         result["formatted_total"] = format_money(self.total_cents)
+0231:         return result
+0232: 
+0233: 
+0234: SCHEMA = """
+0235: CREATE TABLE IF NOT EXISTS metadata (
+0236:     key TEXT PRIMARY KEY,
+0237:     value TEXT NOT NULL
+0238: );
+0239: CREATE TABLE IF NOT EXISTS customers (
+0240:     customer_id TEXT PRIMARY KEY,
+0241:     name TEXT NOT NULL,
+0242:     region TEXT NOT NULL,
+0243:     active INTEGER NOT NULL CHECK(active IN (0, 1))
+0244: );
+0245: CREATE TABLE IF NOT EXISTS products (
+0246:     sku TEXT PRIMARY KEY,
+0247:     name TEXT NOT NULL,
+0248:     category TEXT NOT NULL,
+0249:     price_cents INTEGER NOT NULL CHECK(price_cents >= 0),
+0250:     stock INTEGER NOT NULL CHECK(stock >= 0),
+0251:     active INTEGER NOT NULL CHECK(active IN (0, 1)),
+0252:     updated_at TEXT NOT NULL
+0253: );
+0254: CREATE TABLE IF NOT EXISTS coupons (
+0255:     code TEXT PRIMARY KEY,
+0256:     basis_points INTEGER NOT NULL CHECK(basis_points BETWEEN 0 AND 10000),
+0257:     minimum_cents INTEGER NOT NULL CHECK(minimum_cents >= 0),
+0258:     max_discount_cents INTEGER NOT NULL CHECK(max_discount_cents >= 0),
+0259:     expires_on TEXT NOT NULL,
+0260:     max_uses INTEGER NOT NULL CHECK(max_uses > 0),
+0261:     active INTEGER NOT NULL CHECK(active IN (0, 1))
+0262: );
+0263: CREATE TABLE IF NOT EXISTS orders (
+0264:     order_id TEXT PRIMARY KEY,
+0265:     customer_id TEXT NOT NULL REFERENCES customers(customer_id),
+0266:     request_id TEXT NOT NULL UNIQUE,
+0267:     request_hash TEXT NOT NULL,
+0268:     status TEXT NOT NULL CHECK(status IN ('placed', 'shipped', 'cancelled')),
+0269:     shipping_method TEXT NOT NULL,
+0270:     coupon TEXT,
+0271:     subtotal_cents INTEGER NOT NULL,
+0272:     discount_cents INTEGER NOT NULL,
+0273:     shipping_cents INTEGER NOT NULL,
+0274:     tax_cents INTEGER NOT NULL,
+0275:     total_cents INTEGER NOT NULL,
+0276:     created_at TEXT NOT NULL,
+0277:     updated_at TEXT NOT NULL
+0278: );
+0279: CREATE TABLE IF NOT EXISTS order_lines (
+0280:     order_id TEXT NOT NULL REFERENCES orders(order_id),
+0281:     sku TEXT NOT NULL REFERENCES products(sku),
+0282:     name TEXT NOT NULL,
+0283:     quantity INTEGER NOT NULL CHECK(quantity > 0),
+0284:     unit_price_cents INTEGER NOT NULL,
+0285:     line_total_cents INTEGER NOT NULL,
+0286:     PRIMARY KEY(order_id, sku)
+0287: );
+0288: CREATE TABLE IF NOT EXISTS inventory_events (
+0289:     event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+0290:     sku TEXT NOT NULL REFERENCES products(sku),
+0291:     order_id TEXT REFERENCES orders(order_id),
+0292:     delta INTEGER NOT NULL,
+0293:     reason TEXT NOT NULL,
+0294:     created_at TEXT NOT NULL
+0295: );
+0296: CREATE TABLE IF NOT EXISTS audit_events (
+0297:     event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+0298:     entity_type TEXT NOT NULL,
+0299:     entity_id TEXT NOT NULL,
+0300:     action TEXT NOT NULL,
+0301:     detail_json TEXT NOT NULL,
+0302:     created_at TEXT NOT NULL
+0303: );
+0304: CREATE TABLE IF NOT EXISTS shipments (
+0305:     order_id TEXT PRIMARY KEY REFERENCES orders(order_id),
+0306:     tracking_number TEXT NOT NULL UNIQUE,
+0307:     carrier TEXT NOT NULL,
+0308:     shipped_at TEXT NOT NULL
+0309: );
+0310: CREATE TABLE IF NOT EXISTS refunds (
+0311:     refund_id TEXT PRIMARY KEY,
+0312:     order_id TEXT NOT NULL REFERENCES orders(order_id),
+0313:     request_id TEXT NOT NULL UNIQUE,
+0314:     amount_cents INTEGER NOT NULL CHECK(amount_cents > 0),
+0315:     reason TEXT NOT NULL,
+0316:     created_at TEXT NOT NULL
+0317: );
+0318: CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
+0319: CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at);
+0320: CREATE INDEX IF NOT EXISTS idx_inventory_sku ON inventory_events(sku);
+0321: CREATE INDEX IF NOT EXISTS idx_refunds_order ON refunds(order_id);
+0322: """
+0323: 
+0324: 
+0325: class Database:
+0326:     def __init__(self, path: Path):
+0327:         if not path.parent.is_dir():
+0328:             raise ServiceError("Database directory does not exist")
+0329:         self.path = path
+0330:         self.connection = sqlite3.connect(str(path), isolation_level=None, timeout=5)
+0331:         self.connection.row_factory = sqlite3.Row
+0332:         self.connection.execute("PRAGMA foreign_keys = ON")
+0333: 
+0334:     def close(self) -> None:
+0335:         self.connection.close()
+0336: 
+0337:     def initialize(self) -> None:
+0338:         self.connection.executescript(SCHEMA)
+0339:         current = self.one("SELECT value FROM metadata WHERE key = ?", ("schema",))
+0340:         if current and int(current["value"]) != SCHEMA_VERSION:
+0341:             raise Conflict("Unsupported database schema version")
+0342:         self.execute("INSERT OR IGNORE INTO metadata(key, value) VALUES (?, ?)",
+0343:                      ("schema", str(SCHEMA_VERSION)))
+0344: 

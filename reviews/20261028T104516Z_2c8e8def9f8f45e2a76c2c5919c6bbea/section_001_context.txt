@@ -1,0 +1,186 @@
+0001: """Local order-processing service for the Week 1 code review assignment.
+0002: 
+0003: Python 3.11 or newer; standard library only. All customers and products are
+0004: fictional. Money is stored in integer cents. No network or payment provider is
+0005: used. Commands operate on a local SQLite file selected with --db.
+0006: 
+0007: Examples:
+0008:     python order_service.py --db practice.db seed
+0009:     python order_service.py --db practice.db catalog
+0010:     python order_service.py --db practice.db checkout --request cases/quantity.json
+0011:     python order_service.py --db practice.db report --start 2026-01-01 --end 2026-12-31
+0012: 
+0013: Read BUSINESS_RULES.md for the intended behavior. This file is supplied for
+0014: inspection, not as a correct reference implementation or a production service.
+0015: """
+0016: from __future__ import annotations
+0017: 
+0018: import argparse
+0019: import csv
+0020: import hashlib
+0021: import json
+0022: import logging
+0023: import sqlite3
+0024: import sys
+0025: from contextlib import contextmanager
+0026: from dataclasses import asdict, dataclass
+0027: from datetime import date, datetime, timedelta, timezone
+0028: from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+0029: from pathlib import Path
+0030: from typing import Any, Iterator
+0031: 
+0032: LOG = logging.getLogger("order_service")
+0033: SCHEMA_VERSION = 1
+0034: MAX_CART_LINES = 40
+0035: MAX_LINE_QUANTITY = 100
+0036: TAX_BASIS_POINTS = 1000
+0037: FREE_SHIPPING_CENTS = 10000
+0038: SHIPPING_CENTS = {"standard": 500, "express": 1200, "pickup": 0}
+0039: VALID_STATUSES = {"placed", "shipped", "cancelled"}
+0040: 
+0041: 
+0042: class ServiceError(Exception):
+0043:     """An input or business-rule error suitable for a command-line user."""
+0044: 
+0045: 
+0046: class NotFound(ServiceError):
+0047:     """A requested customer, product or order does not exist."""
+0048: 
+0049: 
+0050: class Conflict(ServiceError):
+0051:     """The operation conflicts with current stock or order state."""
+0052: 
+0053: 
+0054: def utc_now() -> datetime:
+0055:     return datetime.now(timezone.utc)
+0056: 
+0057: 
+0058: def parse_time(value: str) -> datetime:
+0059:     try:
+0060:         result = datetime.fromisoformat(value.replace("Z", "+00:00"))
+0061:     except (ValueError, AttributeError) as exc:
+0062:         raise ServiceError("Use an ISO timestamp with a timezone") from exc
+0063:     if result.tzinfo is None:
+0064:         raise ServiceError("Timestamp must include a timezone")
+0065:     return result.astimezone(timezone.utc)
+0066: 
+0067: 
+0068: def timestamp(value: datetime) -> str:
+0069:     if value.tzinfo is None:
+0070:         raise ServiceError("Cannot store a timestamp without a timezone")
+0071:     return value.astimezone(timezone.utc).isoformat(timespec="seconds")
+0072: 
+0073: 
+0074: def parse_day(value: str) -> date:
+0075:     try:
+0076:         return date.fromisoformat(value)
+0077:     except ValueError as exc:
+0078:         raise ServiceError("Dates must use YYYY-MM-DD") from exc
+0079: 
+0080: 
+0081: def nonempty(value: Any, name: str, maximum: int = 120) -> str:
+0082:     if not isinstance(value, str) or not value.strip():
+0083:         raise ServiceError(f"{name} must be a nonempty string")
+0084:     result = value.strip()
+0085:     if len(result) > maximum:
+0086:         raise ServiceError(f"{name} exceeds {maximum} characters")
+0087:     return result
+0088: 
+0089: 
+0090: def integer(value: Any, name: str, minimum: int, maximum: int) -> int:
+0091:     if isinstance(value, bool) or not isinstance(value, int):
+0092:         raise ServiceError(f"{name} must be an integer")
+0093:     if not minimum <= value <= maximum:
+0094:         raise ServiceError(f"{name} must be between {minimum} and {maximum}")
+0095:     return value
+0096: 
+0097: 
+0098: def money_to_cents(value: str) -> int:
+0099:     try:
+0100:         amount = Decimal(value)
+0101:     except InvalidOperation as exc:
+0102:         raise ServiceError("Invalid money amount") from exc
+0103:     if not amount.is_finite() or amount < 0:
+0104:         raise ServiceError("Money amount must be finite and nonnegative")
+0105:     return int((amount * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+0106: 
+0107: 
+0108: def format_money(cents: int) -> str:
+0109:     return f"{Decimal(cents) / 100:.2f}"
+0110: 
+0111: 
+0112: def percentage(cents: int, basis_points: int) -> int:
+0113:     return int((Decimal(cents) * basis_points / 10000).quantize(
+0114:         Decimal("1"), rounding=ROUND_HALF_UP,
+0115:     ))
+0116: 
+0117: 
+0118: def canonical_json(value: Any) -> str:
+0119:     return json.dumps(value, sort_keys=True, separators=(",", ":"))
+0120: 
+0121: 
+0122: def payload_hash(value: Any) -> str:
+0123:     return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+0124: 
+0125: 
+0126: def read_json(path: Path) -> dict[str, Any]:
+0127:     if path.stat().st_size > 100_000:
+0128:         raise ServiceError("Request file exceeds 100000 bytes")
+0129:     try:
+0130:         value = json.loads(path.read_text(encoding="utf-8"))
+0131:     except (UnicodeError, json.JSONDecodeError) as exc:
+0132:         raise ServiceError("Request must be a UTF-8 JSON document") from exc
+0133:     if not isinstance(value, dict):
+0134:         raise ServiceError("Request must contain a JSON object")
+0135:     return value
+0136: 
+0137: 
+0138: @dataclass(frozen=True)
+0139: class Customer:
+0140:     customer_id: str
+0141:     name: str
+0142:     region: str
+0143:     active: bool
+0144: 
+0145:     @classmethod
+0146:     def from_row(cls, row: sqlite3.Row) -> Customer:
+0147:         return cls(row["customer_id"], row["name"], row["region"], bool(row["active"]))
+0148: 
+0149: 
+0150: @dataclass(frozen=True)
+0151: class Product:
+0152:     sku: str
+0153:     name: str
+0154:     category: str
+0155:     price_cents: int
+0156:     stock: int
+0157:     active: bool
+0158: 
+0159:     @classmethod
+0160:     def from_row(cls, row: sqlite3.Row) -> Product:
+0161:         return cls(row["sku"], row["name"], row["category"], row["price_cents"],
+0162:                    row["stock"], bool(row["active"]))
+0163: 
+0164: 
+0165: @dataclass(frozen=True)
+0166: class CartLine:
+0167:     sku: str
+0168:     quantity: int
+0169: 
+0170:     @classmethod
+0171:     def from_dict(cls, value: Any) -> CartLine:
+0172:         if not isinstance(value, dict):
+0173:             raise ServiceError("Each cart line must be an object")
+0174:         sku = nonempty(value.get("sku"), "sku", 40).upper()
+0175:         quantity = integer(value.get("quantity"), "quantity", 1, MAX_LINE_QUANTITY)
+0176:         return cls(sku, quantity)
+0177: 
+0178: 
+0179: @dataclass(frozen=True)
+0180: class CheckoutRequest:
+0181:     customer_id: str
+0182:     lines: tuple[CartLine, ...]
+0183:     shipping: str
+0184:     coupon: str | None
+0185:     request_id: str
+0186: 

@@ -1,5 +1,5 @@
 """Read Python source without executing it."""
-
+from scope_context import describe_scopes
 import ast
 import hashlib
 from pathlib import Path
@@ -139,6 +139,10 @@ def make_sections(text, max_chars=7000, overlap_lines=15):
             "end_line": end,
             "context": "".join(numbered[start:end]),
             "partial_function": partial,
+            "scope_context": (
+                describe_scopes(text, start + 1, end)
+                if partial else ""
+            ),
         })
 
         if end == len(lines):

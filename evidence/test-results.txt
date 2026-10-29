@@ -1,19 +1,32 @@
+test_caller_depth_boundaries (test_caller_depth.CallerDepthTests.test_caller_depth_boundaries) ... ok
+test_disabled_callers_are_excluded (test_caller_depth.CallerDepthTests.test_disabled_callers_are_excluded) ... ok
+test_invalid_caller_depth_is_rejected (test_caller_depth.CallerDepthTests.test_invalid_caller_depth_is_rejected) ... ok
+test_recursive_callers_terminate (test_caller_depth.CallerDepthTests.test_recursive_callers_terminate) ... ok
 test_failed_sections_are_rejected (test_consolidate.ConsolidationTests.test_failed_sections_are_rejected) ... ok
-test_oversized_input_is_not_silently_truncated (test_consolidate.ConsolidationTests.test_oversized_input_is_not_silently_truncated) ... Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpg6n55w0z/consolidation_fe508b0995234f50804eb4379136a56b
+test_oversized_input_is_not_silently_truncated (test_consolidate.ConsolidationTests.test_oversized_input_is_not_silently_truncated) ... Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmprbsu6477/consolidation_c20f2def455e4727acbf097cdf91c730
 ok
-test_provider_failure_produces_no_final_report (test_consolidate.ConsolidationTests.test_provider_failure_produces_no_final_report) ... Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp32d_41qe/consolidation_4353d1c079dc4175b8fee37ae700c8fe
+test_provider_failure_produces_no_final_report (test_consolidate.ConsolidationTests.test_provider_failure_produces_no_final_report) ... Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpebylzbjs/consolidation_abe3f6deb81e4c939e339bf2916b7e0c
 Waiting 0s before merge 1/2...
 ok
-test_success_saves_report_and_evidence (test_consolidate.ConsolidationTests.test_success_saves_report_and_evidence) ... Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp98wo9pnq/consolidation_6766945828544f308732e050338a30dd
+test_success_saves_report_and_evidence (test_consolidate.ConsolidationTests.test_success_saves_report_and_evidence) ... Consolidation evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp16s6x0n5/consolidation_d166043af2c84a9c90ce8d420cdf9e58
 Waiting 0s before merge 1/2...
 Waiting 0s before merge 2/2...
 ok
 test_dependency_depth_limit_is_reported (test_context_integrity.ContextIntegrityTests.test_dependency_depth_limit_is_reported) ... ok
 test_distant_validation_is_retrieved_together (test_context_integrity.ContextIntegrityTests.test_distant_validation_is_retrieved_together) ... ok
 test_oversized_evidence_is_not_split (test_context_integrity.ContextIntegrityTests.test_oversized_evidence_is_not_split) ... ok
+test_formatted_function_takes_priority_over_prose_words (test_explicit_references.ExplicitReferenceTests.test_formatted_function_takes_priority_over_prose_words) ... ok
 test_absent_usage_remains_unknown (test_failed_usage.FailedUsageTests.test_absent_usage_remains_unknown) ... ok
 test_invalid_counts_are_not_accepted (test_failed_usage.FailedUsageTests.test_invalid_counts_are_not_accepted) ... ok
 test_truncated_response_preserves_available_usage (test_failed_usage.FailedUsageTests.test_truncated_response_preserves_available_usage) ... ok
+test_both_supported_headings (test_finding_extraction.FindingExtractionTests.test_both_supported_headings) ... ok
+test_duplicates_and_uncertainty_are_excluded (test_finding_extraction.FindingExtractionTests.test_duplicates_and_uncertainty_are_excluded) ... ok
+test_prose_only_report_requires_inspection (test_finding_extraction.FindingExtractionTests.test_prose_only_report_requires_inspection) ... ok
+test_planning_block_prevents_provider_call (test_planning_block.PlanningBlockTests.test_planning_block_prevents_provider_call) ... Task 1: 100 estimated tokens — BLOCKED
+ok
+test_explicit_flags_are_preserved (test_prompt_boundaries.PromptBoundaryTests.test_explicit_flags_are_preserved) ... ok
+test_missing_flag_defaults_to_caution (test_prompt_boundaries.PromptBoundaryTests.test_missing_flag_defaults_to_caution) ... ok
+test_source_context_is_unchanged (test_prompt_boundaries.PromptBoundaryTests.test_source_context_is_unchanged) ... ok
 test_connection_failure_is_provider_error (test_provider.ProviderTests.test_connection_failure_is_provider_error) ... ok
 test_http_error_redacts_key_and_preserves_retry_hint (test_provider.ProviderTests.test_http_error_redacts_key_and_preserves_retry_hint) ... ok
 test_invalid_usage_counts_remain_unknown (test_provider.ProviderTests.test_invalid_usage_counts_remain_unknown) ... ok
@@ -21,16 +34,17 @@ test_malformed_response_preserves_raw_evidence (test_provider.ProviderTests.test
 test_missing_key_prevents_network_call (test_provider.ProviderTests.test_missing_key_prevents_network_call) ... ok
 test_successful_http_response (test_provider.ProviderTests.test_successful_http_response) ... ok
 test_blank_request (test_reviewer.ReviewerTests.test_blank_request) ... ok
-test_dry_run_never_calls_provider (test_reviewer.ReviewerTests.test_dry_run_never_calls_provider) ... Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpqs_k_8h5/reviews/20261028T063422Z_2e7f2eb0d23d4a518b50b815b78fa253
+test_dry_run_never_calls_provider (test_reviewer.ReviewerTests.test_dry_run_never_calls_provider) ... Assessments saved: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpuybbtq0_/verification_test/completed_9c7fa8c2965a4b72a5d577dd87e08366/verification_report.md
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpc6ev3rjk/reviews/20261029T053055Z_ff3b554c2cfa4afbb1754820c57f2241
 Source: 1 lines, 1 sections
 Prepared section_001; no API call.
 ok
 test_each_run_has_a_unique_folder (test_reviewer.ReviewerTests.test_each_run_has_a_unique_folder) ... Dry run complete. No API calls made.
-Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp2mf_1zsi/reviews/20261028T063422Z_50e27340668a42d1ae014835e73ce098
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmppp5snel5/reviews/20261029T053055Z_36c3c1ffff234bd5a5b198a60ce06b83
 Source: 1 lines, 1 sections
 Prepared section_001; no API call.
 Dry run complete. No API calls made.
-Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp2mf_1zsi/reviews/20261028T063422Z_54b0d85eb82049bfbf1f5587ec9b322e
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmppp5snel5/reviews/20261029T053055Z_1081ce58002d4c07b73313c82302f17e
 Source: 1 lines, 1 sections
 Prepared section_001; no API call.
 ok
@@ -39,25 +53,32 @@ test_invalid_text_and_python (test_reviewer.ReviewerTests.test_invalid_text_and_
 test_missing_and_unreadable_source (test_reviewer.ReviewerTests.test_missing_and_unreadable_source) ... ok
 test_no_overwriting (test_reviewer.ReviewerTests.test_no_overwriting) ... ok
 test_provider_failure_is_not_success (test_reviewer.ReviewerTests.test_provider_failure_is_not_success) ... Dry run complete. No API calls made.
-Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpqeyh_rpt/reviews/20261028T063422Z_0fd3a74f7c724759af7ad029580e6bb9
+Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmph5j1cs7c/reviews/20261029T053055Z_c5df38e799994ec0920e81dcd9068c1b
 Source: 1 lines, 1 sections
 Reviewing 1/1 (lines 1-1)...
 Incomplete: TEST HTTP 429
-Inspect evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpqeyh_rpt/reviews/20261028T063422Z_0fd3a74f7c724759af7ad029580e6bb9
+Inspect evidence: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmph5j1cs7c/reviews/20261029T053055Z_c5df38e799994ec0920e81dcd9068c1b
 ok
 test_sections_cover_all_lines (test_reviewer.ReviewerTests.test_sections_cover_all_lines) ... ok
 test_source_hash_matches_original_bytes (test_reviewer.ReviewerTests.test_source_hash_matches_original_bytes) ... ok
-test_success_and_source_preservation (test_reviewer.ReviewerTests.test_success_and_source_preservation) ... Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmp9tua7ib0/reviews/20261028T063422Z_ed418d15d5734e5293a78745a4149c4c
+test_success_and_source_preservation (test_reviewer.ReviewerTests.test_success_and_source_preservation) ... Evidence folder: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpg763ptlo/reviews/20261029T053055Z_8f6bc8f515454d83aef1ed6b89e36b1f
 Source: 1 lines, 1 sections
 Reviewing 1/1 (lines 1-1)...
 ok
 test_unknown_usage_stays_unknown (test_reviewer.ReviewerTests.test_unknown_usage_stays_unknown) ... ok
+test_assignment_and_handler_outside_fragment_are_located (test_scope_context.ScopeContextTests.test_assignment_and_handler_outside_fragment_are_located) ... ok
+test_complete_function_needs_no_map (test_scope_context.ScopeContextTests.test_complete_function_needs_no_map) ... ok
+test_map_is_bounded_and_discloses_omission (test_scope_context.ScopeContextTests.test_map_is_bounded_and_discloses_omission) ... ok
+test_nested_assignment_is_not_attributed_to_outer_scope (test_scope_context.ScopeContextTests.test_nested_assignment_is_not_attributed_to_outer_scope) ... ok
+test_fitting_function_stays_together (test_section_boundaries.SectionBoundaryTests.test_fitting_function_stays_together) ... ok
+test_method_with_multiline_sql_stays_together (test_section_boundaries.SectionBoundaryTests.test_method_with_multiline_sql_stays_together) ... ok
+test_oversized_function_retains_every_line (test_section_boundaries.SectionBoundaryTests.test_oversized_function_retains_every_line) ... ok
 test_saved_success_is_reused (test_verification.VerificationTests.test_saved_success_is_reused) ... Section reviews saved. Consolidation and human validation remain pending.
-Task 1: 3268 estimated tokens — ELIGIBLE
+Task 1: 3397 estimated tokens — ELIGIBLE
 Waiting 0s before verification 1...
 Verification 1 saved.
-Assessments saved: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpkj0f7dw6/verification_test/completed_6163f53b99c2425c8eb03d52983873c8/verification_report.md
-Task 1: 3268 estimated tokens — ELIGIBLE
+Assessments saved: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpfs87glp_/verification_test/completed_3540955004424e1ebe34b025e2c38291/verification_report.md
+Task 1: 3397 estimated tokens — ELIGIBLE
 Reusing verification 1.
 ok
 test_capitalized_name_matches_function (test_verification_context.RetrievalTests.test_capitalized_name_matches_function) ... ok
@@ -68,7 +89,7 @@ test_incomplete_verification_returns_nonzero (test_verification_exit.Verificatio
 ok
 
 ----------------------------------------------------------------------
-Ran 34 tests in 0.136s
+Ran 53 tests in 0.196s
 
 OK
-Assessments saved: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpkj0f7dw6/verification_test/completed_7a3061b0dca744a8bb3940c0f11be4b2/verification_report.md
+Assessments saved: /var/folders/h2/cjtkp4_n0x7g72xz3y_xnlqh0000gn/T/tmpfs87glp_/verification_test/completed_cc6074c6e78940df8bcf09765a11a427/verification_report.md

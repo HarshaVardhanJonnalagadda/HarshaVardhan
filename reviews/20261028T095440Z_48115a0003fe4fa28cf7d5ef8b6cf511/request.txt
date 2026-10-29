@@ -1,0 +1,1 @@
+Review this Python code-review tool for bugs. Investigate input handling, API failures, incomplete responses, evidence preservation, credential handling and exit status. Explain supported defects, their effects, missing context and next checks. Do not assume unspecified requirements.

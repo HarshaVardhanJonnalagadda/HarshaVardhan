@@ -1,0 +1,11 @@
+{
+  "previous_run": "/Users/harshavardhanjonnalagadda/Desktop/Code Review Agent /reviews/20261028T090642Z_346efbb75ad84fa091b6e11a231c8f9b",
+  "reused_sections": [
+    1,
+    2
+  ],
+  "token_limit": 8000,
+  "overhead_margin": 500,
+  "token_accounting": "Local estimate; provider accounting may differ.",
+  "usage_note": "Run totals include reused historical results. Do not add totals across resume folders because that would count reused calls more than once."
+}

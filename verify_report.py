@@ -43,6 +43,22 @@ A helper call may perform validation without an explicit comparison here.
 A section without relevant code does not contradict another section.
 Do not invent filenames, requirements, line numbers, or execution results.
 Do not claim runtime reproduction or fix verification.
+Assess the entire causal claim, not merely whether a quoted expression exists.
+Separate a locally true observation from its claimed effect.
+
+SUPPORTED requires evidence for the material causal steps and any asserted
+requirement. If only the local observation is established, use UNRESOLVED
+and identify the missing evidence.
+
+For exception claims, inspect supplied callers and outer exception handlers.
+For partial-write claims, inspect statement order, transaction boundaries,
+commit behavior and rollback behavior.
+
+Use direct counter-evidence when supplied. Do not claim that no mitigation
+exists elsewhere when the relevant context is missing.
+
+Source quotations must be exact. Do not insert explanatory comments into
+quoted source.
 Human validation remains required.
 """.strip()
 
@@ -106,6 +122,9 @@ def verify(folder, pause=65, dry_run=False, token_limit=8000):
     for index, task in enumerate(plan["tasks"], 1):
         context, payload = prepare_payload(plan, task, model)
         budget = token_budget(payload, limit=token_limit)
+        if task.get("planning_blocked"):
+            budget["eligible"] = False
+            budget["blocked_reason"] = task["planning_blocked"]
         prepared.append((index, task, context, payload, budget))
 
         status = "ELIGIBLE" if budget["eligible"] else "BLOCKED"
@@ -134,14 +153,20 @@ def verify(folder, pause=65, dry_run=False, token_limit=8000):
 
         if not budget["eligible"]:
             blocked.append(index)
+            reason = budget.get(
+                "blocked_reason",
+                "The complete evidence exceeds the configured "
+                "local token budget.",
+            )
             reports.append(
                 heading
                 + "## Assessment\nUNRESOLVED\n\n"
-                + "No model call was made: the complete evidence exceeds "
-                + "the configured local token budget. Source was not "
-                + "split or truncated.\n\n"
-                + f"Estimated budget: {budget['estimated_total']} tokens; "
-                + f"limit: {budget['limit']}.\n"
+                + f"No model call was made. Reason: {reason}\n\n"
+                + "The finding remains unresolved. "
+                + "No source was split or truncated.\n\n"
+                + f"Estimated request budget: "
+                + f"{budget['estimated_total']} tokens; "
+                + f"token limit: {budget['limit']}.\n"
             )
             continue
 
