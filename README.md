@@ -307,3 +307,20 @@ These results do not establish a general reduction in false positives.
 Historical review evidence remains unchanged. Changed section boundaries
 and prompts prevent safe reuse of earlier review responses; start a
 new run when evaluating this version.
+## Review a Python repository
+
+```sh
+python review_repository.py /path/to/repository --request "Why does checkout fail when the cart is empty?" --dry-run
+```
+
+Remove `--dry-run` to run the review with `GROQ_API_KEY` configured.
+The command reads Python source without importing or executing it. It ranks
+functions by question terms and follows matching call names across files.
+It sends at most eight complete excerpts and 14,000 characters of numbered
+source. This is a character limit. Call-name matching can confuse unrelated
+functions and miss dynamic calls. Large or invalid files may be skipped.
+
+The command prints a temporary evidence folder outside the reviewed repository.
+It contains a search and timing trace, the selected context and prompt,
+and, for live calls, the response or error evidence. Token counts come from
+the provider when available. Copy the folder elsewhere to retain it.
