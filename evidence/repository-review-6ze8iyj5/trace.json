@@ -1,0 +1,366 @@
+{
+  "repository": "/Users/harshavardhanjonnalagadda/Desktop/Code Review Agent ",
+  "question": "How does reviewer.py handle an API error raised by provider.py?",
+  "model": "openai/gpt-oss-120b",
+  "outcome": "completed",
+  "duration_seconds": 3.715986791998148,
+  "events": [
+    {
+      "event": "file_search",
+      "path": "consolidate.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.001287250081077218
+    },
+    {
+      "event": "file_search",
+      "path": "evidence_store.py",
+      "outcome": "searched",
+      "blocks": 7,
+      "duration_seconds": 0.0009462919551879168
+    },
+    {
+      "event": "file_search",
+      "path": "prompts.py",
+      "outcome": "searched",
+      "blocks": 1,
+      "duration_seconds": 0.00032820901833474636
+    },
+    {
+      "event": "file_search",
+      "path": "provider.py",
+      "outcome": "searched",
+      "blocks": 7,
+      "duration_seconds": 0.0011557908728718758
+    },
+    {
+      "event": "file_search",
+      "path": "resume_consolidation.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.0011371250730007887
+    },
+    {
+      "event": "file_search",
+      "path": "resume_review.py",
+      "outcome": "searched",
+      "blocks": 6,
+      "duration_seconds": 0.0018329168669879436
+    },
+    {
+      "event": "file_search",
+      "path": "review_repository.py",
+      "outcome": "searched",
+      "blocks": 3,
+      "duration_seconds": 0.002527874894440174
+    },
+    {
+      "event": "file_search",
+      "path": "reviewer.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.0013319170102477074
+    },
+    {
+      "event": "file_search",
+      "path": "scope_context.py",
+      "outcome": "searched",
+      "blocks": 3,
+      "duration_seconds": 0.0011349590495228767
+    },
+    {
+      "event": "file_search",
+      "path": "source_context.py",
+      "outcome": "searched",
+      "blocks": 4,
+      "duration_seconds": 0.0011041660327464342
+    },
+    {
+      "event": "file_search",
+      "path": "verification_context.py",
+      "outcome": "searched",
+      "blocks": 9,
+      "duration_seconds": 0.0026116659864783287
+    },
+    {
+      "event": "file_search",
+      "path": "verification_plan.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0012941248714923859
+    },
+    {
+      "event": "file_search",
+      "path": "verify_report.py",
+      "outcome": "searched",
+      "blocks": 4,
+      "duration_seconds": 0.0018627499230206013
+    },
+    {
+      "event": "file_search",
+      "path": "Data/order_service.py",
+      "outcome": "searched",
+      "blocks": 84,
+      "duration_seconds": 0.01095608389005065
+    },
+    {
+      "event": "file_search",
+      "path": "examples/average_example.py",
+      "outcome": "searched",
+      "blocks": 1,
+      "duration_seconds": 0.000374792143702507
+    },
+    {
+      "event": "file_search",
+      "path": "examples/reviewer_candidate.py",
+      "outcome": "searched",
+      "blocks": 7,
+      "duration_seconds": 0.0018519579898566008
+    },
+    {
+      "event": "file_search",
+      "path": "review-input/order_service.py",
+      "outcome": "searched",
+      "blocks": 84,
+      "duration_seconds": 0.010623499983921647
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_caller_depth.py",
+      "outcome": "searched",
+      "blocks": 6,
+      "duration_seconds": 0.000739875016734004
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_consolidate.py",
+      "outcome": "searched",
+      "blocks": 9,
+      "duration_seconds": 0.001082541886717081
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_context_integrity.py",
+      "outcome": "searched",
+      "blocks": 4,
+      "duration_seconds": 0.0005252920091152191
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_explicit_references.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.00031654187478125095
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_failed_usage.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0005562501028180122
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_finding_extraction.py",
+      "outcome": "searched",
+      "blocks": 4,
+      "duration_seconds": 0.00034429202787578106
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_planning_block.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.000538625055924058
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_prompt_boundaries.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0004970000591129065
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_provider.py",
+      "outcome": "searched",
+      "blocks": 7,
+      "duration_seconds": 0.0010861251503229141
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_repository_retrieval.py",
+      "outcome": "searched",
+      "blocks": 3,
+      "duration_seconds": 0.0005921660922467709
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_reviewer.py",
+      "outcome": "searched",
+      "blocks": 16,
+      "duration_seconds": 0.002031083917245269
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_scope_context.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0005143750458955765
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_section_boundaries.py",
+      "outcome": "searched",
+      "blocks": 6,
+      "duration_seconds": 0.0010213330388069153
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_verification.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.0005106250755488873
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_verification_context.py",
+      "outcome": "searched",
+      "blocks": 3,
+      "duration_seconds": 0.0005789170973002911
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_verification_exit.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0005105000454932451
+    },
+    {
+      "event": "explicit_path",
+      "requested": "provider.py",
+      "matches": [
+        "provider.py"
+      ]
+    },
+    {
+      "event": "explicit_path",
+      "requested": "reviewer.py",
+      "matches": [
+        "reviewer.py"
+      ]
+    },
+    {
+      "event": "selection",
+      "candidate_blocks": 315,
+      "selected_blocks": 8,
+      "characters": 13110,
+      "locations": [
+        [
+          "evidence_store.py",
+          85
+        ],
+        [
+          "provider.py",
+          3
+        ],
+        [
+          "provider.py",
+          14
+        ],
+        [
+          "provider.py",
+          38
+        ],
+        [
+          "provider.py",
+          82
+        ],
+        [
+          "provider.py",
+          118
+        ],
+        [
+          "reviewer.py",
+          3
+        ],
+        [
+          "reviewer.py",
+          23
+        ]
+      ],
+      "omitted_blocks": [
+        {
+          "path": "evidence_store.py",
+          "start_line": 24,
+          "reason": "context_budget"
+        },
+        {
+          "path": "evidence_store.py",
+          "start_line": 64,
+          "reason": "context_budget"
+        },
+        {
+          "path": "evidence_store.py",
+          "start_line": 70,
+          "reason": "context_budget"
+        },
+        {
+          "path": "evidence_store.py",
+          "start_line": 19,
+          "reason": "context_budget"
+        },
+        {
+          "path": "evidence_store.py",
+          "start_line": 9,
+          "reason": "context_budget"
+        },
+        {
+          "path": "evidence_store.py",
+          "start_line": 123,
+          "reason": "context_budget"
+        },
+        {
+          "path": "prompts.py",
+          "start_line": 66,
+          "reason": "context_budget"
+        },
+        {
+          "path": "provider.py",
+          "start_line": 23,
+          "reason": "context_budget"
+        },
+        {
+          "path": "source_context.py",
+          "start_line": 8,
+          "reason": "context_budget"
+        },
+        {
+          "path": "source_context.py",
+          "start_line": 34,
+          "reason": "context_budget"
+        },
+        {
+          "path": "source_context.py",
+          "start_line": 52,
+          "reason": "context_budget"
+        },
+        {
+          "path": "source_context.py",
+          "start_line": 12,
+          "reason": "context_budget"
+        }
+      ]
+    },
+    {
+      "event": "model_call",
+      "outcome": "completed",
+      "duration_seconds": 3.655,
+      "usage": {
+        "input_tokens": 3913,
+        "output_tokens": 1433,
+        "total_tokens": 5346
+      }
+    }
+  ]
+}

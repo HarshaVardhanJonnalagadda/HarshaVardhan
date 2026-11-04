@@ -1,0 +1,380 @@
+provider.py
+3: import json
+4: import os
+5: import time
+6: import urllib.error
+7: import urllib.request
+
+reviewer.py
+3: import argparse
+4: import hashlib
+5: from pathlib import Path
+6: import sys
+7: import time
+8: 
+9: from source_context import InputError, load_source, make_sections, read_text_file
+10: from prompts import build_messages
+11: from provider import DEFAULT_MODEL, ProviderError, build_payload, call_model
+12: from evidence_store import (
+13:     create_run,
+14:     save_call_failure,
+15:     save_call_input,
+16:     save_call_success,
+17:     save_json,
+18:     save_text,
+19:     total_usage,
+20: )
+
+provider.py
+82: def call_model(payload, timeout=120):
+83:     key = os.environ.get("GROQ_API_KEY", "").strip()
+84: 
+85:     if not key:
+86:         raise ProviderError("GROQ_API_KEY is not set.")
+87: 
+88:     if timeout <= 0:
+89:         raise ValueError("Timeout must be positive.")
+90: 
+91:     request = urllib.request.Request(
+92:         API_URL,
+93:         data=json.dumps(payload).encode("utf-8"),
+94:         headers={
+95:             "Authorization": f"Bearer {key}",
+96:             "Content-Type": "application/json",
+97:             "User-Agent": "CodeReviewAgent/1.0",
+98:         },
+99:         method="POST",
+100:     )
+101: 
+102:     started = time.monotonic()
+103: 
+104:     try:
+105:         with urllib.request.urlopen(request, timeout=timeout) as response:
+106:             raw = response.read().decode("utf-8")
+107: 
+108:     except urllib.error.HTTPError as exc:
+109:         hints = {
+110:             400: "Check the model and request parameters.",
+111:             401: "Check your Groq API key.",
+112:             403: "Check account permissions.",
+113:             413: "The request is too large.",
+114:             429: "Rate limit or quota reached.",
+115:         }
+116:         hint = hints.get(exc.code, "Check provider availability.")
+117: 
+118:         def redact(value):
+119:             return str(value).replace(key, "[REDACTED]")
+120: 
+121:         details = {
+122:             "http_status": exc.code,
+123:             "message": hint,
+124:             "rate_limit_headers": {},
+125:         }
+126: 
+127:         # Save selected error fields, excluding request credentials.
+128:         try:
+129:             body = exc.read().decode("utf-8", errors="replace")
+130:             parsed = json.loads(body)
+131:             error = parsed.get("error", {}) if isinstance(parsed, dict) else {}
+132: 
+133:             if isinstance(error, dict):
+134:                 for field in ("message", "type", "code"):
+135:                     value = error.get(field)
+136:                     if isinstance(value, (str, int, float)):
+137:                         details[field] = redact(value)[:2000]
+138:         except (ValueError, AttributeError, OSError):
+139:             pass
+140: 
+141:         if exc.headers:
+142:             for name, value in exc.headers.items():
+143:                 lower = name.lower()
+144:                 if lower == "retry-after" or lower.startswith("x-ratelimit-"):
+145:                     details["rate_limit_headers"][lower] = redact(value)[:500]
+146: 
+147:         message = f"Groq HTTP {exc.code}: {details['message']}"
+148:         if details["rate_limit_headers"]:
+149:             message += " | Limit details: " + json.dumps(
+150:                 details["rate_limit_headers"]
+151:             )
+152: 
+153:         raise ProviderError(
+154:             message,
+155:             raw_response=json.dumps(details, ensure_ascii=False),
+156:             duration_seconds=round(time.monotonic() - started, 3),
+157:         ) from None
+158: 
+159:     except (urllib.error.URLError, OSError, TimeoutError, UnicodeError):
+160:         raise ProviderError(
+161:             "Connection failed, timed out, or returned invalid text.",
+162:             duration_seconds=round(time.monotonic() - started, 3),
+163:         ) from None
+164: 
+165:     duration = round(time.monotonic() - started, 3)
+166: 
+167:     try:
+168:         result = parse_response(raw)
+169:     except ProviderError as exc:
+170:         exc.duration_seconds = duration
+171:         raise
+172: 
+173:     result["duration_seconds"] = duration
+174:     return result
+
+reviewer.py
+23: def review(args):
+24:     if args.request_file:
+25:         request, _ = read_text_file(args.request_file)
+26:     else:
+27:         request = args.request
+28: 
+29:     if not request or not request.strip() or "\x00" in request:
+30:         raise InputError("Provide a nonblank request without NUL characters.")
+31: 
+32:     if args.pause < 0 or args.timeout <= 0:
+33:         raise InputError("Pause must be nonnegative and timeout positive.")
+34: 
+35:     source = load_source(args.source)
+36: 
+37:     rules = None
+38:     if args.rules:
+39:         rules, _ = read_text_file(args.rules)
+40: 
+41:     sections = make_sections(source["text"])
+42:     folder = create_run(
+43:         args.output, source, request, rules, args.model
+44:     )
+45: 
+46:     print(f"Evidence folder: {folder}", flush=True)
+47:     print(
+48:         f"Source: {source['line_count']} lines, "
+49:         f"{len(sections)} sections",
+50:         flush=True,
+51:     )
+52: 
+53:     started = time.monotonic()
+54:     results = []
+55:     reports = []
+56:     outcome = "failed"
+57:     failure = None
+58: 
+59:     try:
+60:         for index, section in enumerate(sections):
+61:             name = f"section_{index + 1:03d}"
+62: 
+63:             messages = build_messages(
+64:                 request, rules, section, len(sections)
+65:             )
+66:             payload = build_payload(messages, args.model)
+67: 
+68:             save_call_input(
+69:                 folder, name, payload, section["context"]
+70:             )
+71: 
+72:             if args.dry_run:
+73:                 print(f"Prepared {name}; no API call.", flush=True)
+74:                 continue
+75: 
+76:             if index > 0 and args.pause:
+77:                 print(
+78:                     f"Waiting {args.pause:g} seconds before next call...",
+79:                     flush=True,
+80:                 )
+81:                 time.sleep(args.pause)
+82: 
+83:             print(
+84:                 f"Reviewing {index + 1}/{len(sections)} "
+85:                 f"(lines {section['start_line']}"
+86:                 f"-{section['end_line']})...",
+87:                 flush=True,
+88:             )
+89: 
+90:             try:
+91:                 result = call_model(payload, timeout=args.timeout)
+92:             except ProviderError as exc:
+93:                 save_call_failure(folder, name, exc)
+94:                 raise
+95: 
+96:             save_call_success(folder, name, result)
+97:             results.append(result)
+98: 
+99:             reports.append(
+100:                 f"# Section {index + 1}: original lines "
+101:                 f"{section['start_line']}-{section['end_line']}\n\n"
+102:                 f"{result['text']}"
+103:             )
+104: 
+105:         if args.dry_run:
+106:             outcome = "dry_run_no_api_calls"
+107:             save_text(
+108:                 folder,
+109:                 "status.txt",
+110:                 "Prompts prepared only. No model review was produced.\n",
+111:             )
+112:         else:
+113:             outcome = "sections_complete"
+114: 
+115:     except KeyboardInterrupt:
+116:         outcome = "interrupted"
+117:         failure = "Stopped by user; review is incomplete."
+118: 
+119:     except ProviderError as exc:
+120:         failure = str(exc)
+121: 
+122:     except OSError:
+123:         failure = "Could not read or write an evidence file."
+124: 
+125:     finally:
+126:         try:
+127:             current_hash = hashlib.sha256(
+128:                 Path(args.source).read_bytes()
+129:             ).hexdigest()
+130:             source_unchanged = current_hash == source["sha256"]
+131:         except OSError:
+132:             source_unchanged = False
+133: 
+134:         if not source_unchanged:
+135:             outcome = "failed"
+136:             failure = "Source changed or became unreadable during the run."
+137: 
+138:         if reports:
+139:             header = (
+140:                 "# Section review results\n\n"
+141:                 f"Run outcome: {outcome}\n\n"
+142:                 "These are separate model reviews of source sections. "
+143:                 "They are not a consolidated assessment. Cross-section "
+144:                 "behavior may be unresolved and duplicate findings may "
+145:                 "appear. Human validation is pending.\n\n"
+146:             )
+147: 
+148:             save_text(
+149:                 folder,
+150:                 "section_reviews.md",
+151:                 header + "\n\n---\n\n".join(reports),
+152:             )
+153: 
+154:         save_json(folder, "metadata.json", {
+155:             "provider": "Groq",
+156:             "model": args.model,
+157:             "outcome": outcome,
+158:             "expected_sections": len(sections),
+159:             "successful_sections": len(results),
+160:             "duration_seconds": round(time.monotonic() - started, 3),
+161:             "usage_totals": total_usage(results),
+162:             "usage_scope": (
+163:                 "Successfully parsed calls only; failed-call usage "
+164:                 "may be unavailable."
+165:             ),
+166:             "source_unchanged": source_unchanged,
+167:             "human_validation": "pending",
+168:             "error": failure,
+169:         })
+170: 
+171:     if failure:
+172:         print(f"Incomplete: {failure}", file=sys.stderr)
+173:         print(f"Inspect evidence: {folder}", file=sys.stderr)
+174:         return 1
+175: 
+176:     if args.dry_run:
+177:         print("Dry run complete. No API calls made.")
+178:     else:
+179:         print(
+180:             "Section reviews saved. Consolidation and human "
+181:             "validation remain pending."
+182:         )
+183: 
+184:     return 0
+
+provider.py
+38: def parse_response(raw):
+39:     try:
+40:         data = json.loads(raw)
+41:         choice = data["choices"][0]
+42:         content = choice["message"]["content"]
+43:     except (ValueError, KeyError, IndexError, TypeError):
+44:         raise ProviderError(
+45:             "Provider returned a malformed response.",
+46:             raw_response=raw,
+47:         ) from None
+48: 
+49:     if not isinstance(content, str) or not content.strip():
+50:         raise ProviderError(
+51:             "Provider returned an empty response.",
+52:             raw_response=raw,
+53:         )
+54: 
+55:     if choice.get("finish_reason") != "stop":
+56:         raise ProviderError(
+57:             "Response was incomplete or its completion status was unknown.",
+58:             raw_response=raw,
+59:         )
+60: 
+61:     usage = data.get("usage")
+62:     if not isinstance(usage, dict):
+63:         usage = {}
+64: 
+65:     def token_count(name):
+66:         value = usage.get(name)
+67:         if type(value) is int and value >= 0:
+68:             return value
+69:         return "unknown"
+70: 
+71:     return {
+72:         "text": content,
+73:         "raw_response": raw,
+74:         "usage": {
+75:             "input_tokens": token_count("prompt_tokens"),
+76:             "output_tokens": token_count("completion_tokens"),
+77:             "total_tokens": token_count("total_tokens"),
+78:         },
+79:     }
+
+provider.py
+14: class ProviderError(RuntimeError):
+15:     """A failed API call, with available evidence attached."""
+16: 
+17:     def __init__(self, message, raw_response=None, duration_seconds=None):
+18:         super().__init__(message)
+19:         self.raw_response = raw_response
+20:         self.duration_seconds = duration_seconds
+
+provider.py
+118:         def redact(value):
+119:             return str(value).replace(key, "[REDACTED]")
+
+evidence_store.py
+85: def save_call_failure(folder, call_name, error):
+86:     raw = getattr(error, "raw_response", None)
+87:     usage = {
+88:         "input_tokens": "unknown",
+89:         "output_tokens": "unknown",
+90:         "total_tokens": "unknown",
+91:     }
+92: 
+93:     if raw is not None:
+94:         save_text(folder, f"{call_name}_raw_response.json", raw)
+95: 
+96:         try:
+97:             data = json.loads(raw)
+98:         except (ValueError, TypeError):
+99:             data = None
+100: 
+101:         reported = data.get("usage") if isinstance(data, dict) else None
+102: 
+103:         if isinstance(reported, dict):
+104:             mapping = {
+105:                 "input_tokens": "prompt_tokens",
+106:                 "output_tokens": "completion_tokens",
+107:                 "total_tokens": "total_tokens",
+108:             }
+109: 
+110:             for destination, source in mapping.items():
+111:                 value = reported.get(source)
+112:                 if type(value) is int and value >= 0:
+113:                     usage[destination] = value
+114: 
+115:     save_json(folder, f"{call_name}_metadata.json", {
+116:         "outcome": "failed",
+117:         "error": str(error),
+118:         "duration_seconds": getattr(error, "duration_seconds", None),
+119:         "usage": usage,
+120:     })

@@ -1,0 +1,299 @@
+{
+  "repository": "/Users/harshavardhanjonnalagadda/Desktop/Code Review Agent ",
+  "question": "Why did our production deployment fail yesterday? Identify the exact cause using deployment logs.",
+  "model": "openai/gpt-oss-120b",
+  "outcome": "completed",
+  "duration_seconds": 6.044177416944876,
+  "events": [
+    {
+      "event": "file_search",
+      "path": "consolidate.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.0012449580244719982
+    },
+    {
+      "event": "file_search",
+      "path": "evidence_store.py",
+      "outcome": "searched",
+      "blocks": 7,
+      "duration_seconds": 0.0009757089428603649
+    },
+    {
+      "event": "file_search",
+      "path": "prompts.py",
+      "outcome": "searched",
+      "blocks": 1,
+      "duration_seconds": 0.0003294171765446663
+    },
+    {
+      "event": "file_search",
+      "path": "provider.py",
+      "outcome": "searched",
+      "blocks": 7,
+      "duration_seconds": 0.0011731667909771204
+    },
+    {
+      "event": "file_search",
+      "path": "resume_consolidation.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.0011475831270217896
+    },
+    {
+      "event": "file_search",
+      "path": "resume_review.py",
+      "outcome": "searched",
+      "blocks": 6,
+      "duration_seconds": 0.0019665418658405542
+    },
+    {
+      "event": "file_search",
+      "path": "review_repository.py",
+      "outcome": "searched",
+      "blocks": 3,
+      "duration_seconds": 0.0030834581702947617
+    },
+    {
+      "event": "file_search",
+      "path": "reviewer.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.00134470802731812
+    },
+    {
+      "event": "file_search",
+      "path": "scope_context.py",
+      "outcome": "searched",
+      "blocks": 3,
+      "duration_seconds": 0.0010460419580340385
+    },
+    {
+      "event": "file_search",
+      "path": "source_context.py",
+      "outcome": "searched",
+      "blocks": 4,
+      "duration_seconds": 0.0010760831646621227
+    },
+    {
+      "event": "file_search",
+      "path": "verification_context.py",
+      "outcome": "searched",
+      "blocks": 9,
+      "duration_seconds": 0.0027344999834895134
+    },
+    {
+      "event": "file_search",
+      "path": "verification_plan.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0014733748976141214
+    },
+    {
+      "event": "file_search",
+      "path": "verify_report.py",
+      "outcome": "searched",
+      "blocks": 4,
+      "duration_seconds": 0.0017368749249726534
+    },
+    {
+      "event": "file_search",
+      "path": "Data/order_service.py",
+      "outcome": "searched",
+      "blocks": 84,
+      "duration_seconds": 0.010959125123918056
+    },
+    {
+      "event": "file_search",
+      "path": "examples/average_example.py",
+      "outcome": "searched",
+      "blocks": 1,
+      "duration_seconds": 0.0004272919613867998
+    },
+    {
+      "event": "file_search",
+      "path": "examples/reviewer_candidate.py",
+      "outcome": "searched",
+      "blocks": 7,
+      "duration_seconds": 0.0019177091307938099
+    },
+    {
+      "event": "file_search",
+      "path": "review-input/order_service.py",
+      "outcome": "searched",
+      "blocks": 84,
+      "duration_seconds": 0.010677500162273645
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_caller_depth.py",
+      "outcome": "searched",
+      "blocks": 6,
+      "duration_seconds": 0.0006975419819355011
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_consolidate.py",
+      "outcome": "searched",
+      "blocks": 9,
+      "duration_seconds": 0.0011452077887952328
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_context_integrity.py",
+      "outcome": "searched",
+      "blocks": 4,
+      "duration_seconds": 0.000583333894610405
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_explicit_references.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.0003586250822991133
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_failed_usage.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0005485829897224903
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_finding_extraction.py",
+      "outcome": "searched",
+      "blocks": 4,
+      "duration_seconds": 0.0004009590484201908
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_planning_block.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.0005968750920146704
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_prompt_boundaries.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0005244170315563679
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_provider.py",
+      "outcome": "searched",
+      "blocks": 7,
+      "duration_seconds": 0.0010665829759091139
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_repository_retrieval.py",
+      "outcome": "searched",
+      "blocks": 3,
+      "duration_seconds": 0.0005985840689390898
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_reviewer.py",
+      "outcome": "searched",
+      "blocks": 16,
+      "duration_seconds": 0.002046208828687668
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_scope_context.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0005187499336898327
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_section_boundaries.py",
+      "outcome": "searched",
+      "blocks": 6,
+      "duration_seconds": 0.0008167501073330641
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_verification.py",
+      "outcome": "searched",
+      "blocks": 2,
+      "duration_seconds": 0.0005134590901434422
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_verification_context.py",
+      "outcome": "searched",
+      "blocks": 3,
+      "duration_seconds": 0.000308833085000515
+    },
+    {
+      "event": "file_search",
+      "path": "tests/test_verification_exit.py",
+      "outcome": "searched",
+      "blocks": 5,
+      "duration_seconds": 0.0005018748342990875
+    },
+    {
+      "event": "selection",
+      "candidate_blocks": 315,
+      "selected_blocks": 6,
+      "characters": 12571,
+      "locations": [
+        [
+          "consolidate.py",
+          67
+        ],
+        [
+          "evidence_store.py",
+          24
+        ],
+        [
+          "examples/reviewer_candidate.py",
+          47
+        ],
+        [
+          "examples/reviewer_candidate.py",
+          304
+        ],
+        [
+          "resume_review.py",
+          187
+        ],
+        [
+          "review_repository.py",
+          172
+        ]
+      ],
+      "omitted_blocks": [
+        {
+          "path": "examples/reviewer_candidate.py",
+          "start_line": 108,
+          "reason": "context_budget"
+        },
+        {
+          "path": "resume_review.py",
+          "start_line": 26,
+          "reason": "context_budget"
+        },
+        {
+          "path": "review_repository.py",
+          "start_line": 24,
+          "reason": "context_budget"
+        }
+      ]
+    },
+    {
+      "event": "model_call",
+      "outcome": "completed",
+      "duration_seconds": 5.985,
+      "usage": {
+        "input_tokens": 3667,
+        "output_tokens": 2415,
+        "total_tokens": 6082
+      }
+    }
+  ]
+}

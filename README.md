@@ -324,3 +324,29 @@ The command prints a temporary evidence folder outside the reviewed repository.
 It contains a search and timing trace, the selected context and prompt,
 and, for live calls, the response or error evidence. Token counts come from
 the provider when available. Copy the folder elsewhere to retain it.
+
+## Repository review validation
+
+The latest local test suite passed 55 tests.
+Output is saved in evidence/repository-test-results.txt.
+
+Two live demonstrations were preserved.
+
+- evidence/repository-review-6ze8iyj5/ investigates API error handling
+  across reviewer.py, provider.py and evidence_store.py.
+- evidence/repository-review-nnlrt5w2/ asks for a production deployment
+  cause. The response identifies missing logs and leaves the exact
+  cause undetermined.
+
+An earlier response selected examples/reviewer_candidate.py for a
+question naming reviewer.py. Retrieval now prioritises explicitly
+named files and includes relevant imports and dependencies.
+Two regression tests cover this correction.
+
+The revised error-handling answer describes the expected flow.
+Its suggested continuation after failure is an optional design change.
+The deployment answer also lists speculative possibilities.
+Neither demonstration establishes general accuracy.
+
+Retrieval uses name matching and fixed excerpt and character limits.
+Relevant code may be omitted. Human validation remains necessary.
